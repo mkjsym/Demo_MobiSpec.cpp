@@ -9,6 +9,15 @@ MobiSpec.cpp의 온디바이스 추측 디코딩(SD)을 Galaxy S26에서 보여 
 | NPU (Hexagon 타깃 + Hexagon 드래프트) | Qwen3-4B | AR vs DFlash / PCTree / DARTree |
 | NPU | Qwen3-VL-4B, 문서 프리셋 5장 | AR vs None / Full / Ours |
 
+## 화면
+
+Galaxy S26에서 찍었다. 레이스는 GPU 시나리오(Vicuna-7B, AR vs MAST, Spec-Bench coding 질문)이다.
+
+| 레이스 진행 중 | 레이스 종료 | 홈 | VLM 프리셋 |
+|---|---|---|---|
+| <img src="docs/images/race-live.png" width="200"> | <img src="docs/images/race-final.png" width="200"> | <img src="docs/images/home.png" width="200"> | <img src="docs/images/vlm-preset.png" width="200"> |
+| AR(위)을 먼저 돌리고, MAST(아래)가 디코딩하는 중이다. 음영은 드래프트가 맞힌 토큰이고, 오른쪽 아래는 방금 검증한 트리다. | 두 실행의 x AR과 e2e 배수가 나온다. GPU에서는 MAST 텍스트가 AR과 달라지는 위치와 그 이유도 함께 보여 준다. | 기기 상태(배터리, 온도, thermal, 여유 메모리)와 부팅 잠금, 시나리오 목록 | 미리 계산해 둔 문서 페이지와 질문을 고른다. |
+
 ## 구성
 
 경로는 MobiSpec.cpp 체크아웃과 같다. MobiSpec.cpp 트리 위에 그대로 덮어 쓰고 패치를 적용해서 쓴다.
