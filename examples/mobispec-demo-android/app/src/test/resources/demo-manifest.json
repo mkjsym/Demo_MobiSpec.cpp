@@ -1,0 +1,2154 @@
+{
+ "version": 1,
+ "generated": "test fixture: demo-manifest.json with the reference numbers removed",
+ "scenarios": [
+  {
+   "id": "gpu-vicuna-7b",
+   "title": "Vicuna-7B on the GPU: AR vs MAST",
+   "subtitle": "Adreno GPU target and Adreno GPU EAGLE-1/2 draft, cost-gated tree",
+   "backend": "GPU",
+   "drafter": "GPU",
+   "kind": "LLM",
+   "n_predict": 128,
+   "headline": "decode",
+   "prompt_format": "A chat between a curious user and an artificial intelligence assistant. The assistant gives helpful, detailed, and polite answers to the user's questions. USER: {prompt} ASSISTANT:",
+   "custom_prompt": true,
+   "lossless_note": "The GPU has no AR run on the verify kernels: verification scores a batch of tree tokens, AR one token at a time, and OpenCL rounds the two differently, so at a near-tie the greedy texts can part. Both are greedy decodes of the same model.",
+   "prompts": [
+    {
+     "id": "sb00-writing",
+     "title": "writing",
+     "category": "writing",
+     "text": "Compose an engaging travel blog post about a recent trip to Hawaii, highlighting cultural experiences and must-see attractions."
+    },
+    {
+     "id": "sb01-roleplay",
+     "title": "roleplay",
+     "category": "roleplay",
+     "text": "Pretend yourself to be Elon Musk in all the following conversations. Speak like Elon Musk as much as possible. Why do we need to go to Mars?"
+    },
+    {
+     "id": "sb02-reasoning",
+     "title": "reasoning",
+     "category": "reasoning",
+     "text": "Imagine you are participating in a race with a group of people. If you have just overtaken the second person, what's your current position? Where is the person you just overtook?"
+    },
+    {
+     "id": "sb03-math",
+     "title": "math",
+     "category": "math",
+     "text": "The vertices of a triangle are at points (0, 0), (-1, 1), and (3, 3). What is the area of the triangle?"
+    },
+    {
+     "id": "sb04-coding",
+     "title": "coding",
+     "category": "coding",
+     "text": "Develop a Python program that reads all the text files under a directory and returns top-5 words with the most number of occurrences."
+    },
+    {
+     "id": "sb05-extraction",
+     "title": "extraction",
+     "category": "extraction",
+     "text": "Evaluate the following movie reviews on a scale of 1 to 5, with 1 being very negative, 3 being neutral, and 5 being very positive:\n1. This movie released on Nov. 18, 2019, was phenomenal. The cinematography, the acting, the plot - everything was top-notch.\n2. Never before have I been so disappointed with a movie. The plot was predictable and the characters were one-dimensional. In my opinion, this movie is the worst one to have been released in 2022.\n3. The movie was okay. There were some parts I  enjoyed, but there were also parts that felt lackluster. This is a movie that was released in Feb 2018 and seems to be quite ordinary.\nReturn the answer as a JSON array of integers."
+    },
+    {
+     "id": "sb06-stem",
+     "title": "stem",
+     "category": "stem",
+     "text": "In the field of quantum physics, what is superposition, and how does it relate to the phenomenon of quantum entanglement?"
+    },
+    {
+     "id": "sb07-humanities",
+     "title": "humanities",
+     "category": "humanities",
+     "text": "Provide insights into the correlation between economic indicators such as GDP, inflation, and unemployment rates. Explain how fiscal and monetary policies affect those indicators."
+    },
+    {
+     "id": "sb08-translation",
+     "title": "translation",
+     "category": "translation",
+     "text": "Translate German to English: Pfandhäuser boomen in Singapur , da die Krise in der Mittelschicht angekommen ist"
+    },
+    {
+     "id": "sb09-summarization",
+     "title": "summarization",
+     "category": "summarization",
+     "text": "Summarize: Hillary Clinton’s security detail arrived at a suburban Des Moines, Iowa fruit processing company on Tuesday with an added vehicle – a second Scooby. After her signature oversize black Chevy conversion van dropped her off at Capitol Fruit Company in Norwalk, Iowa, a visually identical GMC van drove up to the building with a nearly identical Secret Service escort vehicle. Both armored vehicles have raised roofs, deep-tinted windows and New York license plates. But while the original van – the one nicknamed 'Scooby' after the Scooby-Doo cartoon show – sports a mustard-yellow New York tag, the second has blue and white plates of a different design. Scroll down for video. WHY BUY ONE WHEN YOU CAN HAVE TWO AT TWICE THE PRICE? The first picture of both of Hillary Clinton's Scooby mobiles. One is a GMC and the other is a Chevrolet, but they are mechanically identical. CONVOY: Scooby-one and Scooby-two took up positions in Hillary's motorcade on a freeway near Des Moines. BACK SEAT DRIVER? Hillary Clinton climbs into the so-called Scooby van after a campaign stop at Capital City Fruit in Norwalk, Iowa. Clinton (right), a Democratic presidential hopeful and former secretary of state, posed for selfies with fans after meeting with members of the Iowa State legislature at the State Capital on Wednesday. It’s common for U.S. Secret Service to employ 'decoy' vehicles, identical in design, in order to inject some mystery into VIPs' travel plans, if for no other reason than to confuse and discourage would-be attackers. When President Barack Obama returns to the White House after long trips, his arrival on the Marine One helicopter can be a shell-game exercise when three identical choppers appear on the horizon. Only one, of course, lands on the South Lawn. A Secret Service spokesperson said the agency does not comment on security arrangements for dignitaries. FLASHERS: 'Scooby-two' forced an Iowa motorist to leave the roadway on Wednesday so it could go through a red light and rejoin the caravan. Mrs. Clinton enjoys constant protection at taxpayers' expense because she is part of a former first family, not as a result of her service in the U.S. Senate or the State Department. But at some point during presidential campaigns, front-runner status generally attracts Secret Service as a candidate’s profile is elevated and crowd sizes swell. On Wednesday, the two Scooby vans arrived at Clinton's appointed location separately, but left together in a seven-car motorcade. UNDER GUARD: Two Secret Service agents with Scooby One in Iowa today. MOTORCADE: The Clinton convoy includes both Scooby vans and four black Suburbans, believed to all be Secret Service vehicles. It also included a white minivan on Wednesday. Scooby-Two’s driver brought up the rear, at enough of a distance to allow another car to pull in front of him. When that car stopped at a red light, the GMC van’s blue and red flashing lights came on. The stray car’s driver pulled to one side and Scooby-Two zoomed into the intersection, against the light. DECOYS: The Secret Service frequently deploys duplicates of aircraft and cars it uses to transport VIPs – including Marine One, the president's customized helicopter, which usually travels with two decoys."
+    },
+    {
+     "id": "sb10-qa",
+     "title": "qa",
+     "category": "qa",
+     "text": "Who played anna in once upon a time?"
+    },
+    {
+     "id": "sb11-math_reasoning",
+     "title": "math reasoning",
+     "category": "math_reasoning",
+     "text": "Jen decides to travel to 3 different countries.  He has to pay $400 for the supplies he needs, in total.  The tickets for travel cost, in total, 50% more than the supplies.  How much does travel cost?"
+    },
+    {
+     "id": "sb12-rag",
+     "title": "rag",
+     "category": "rag",
+     "text": "Some researchers state that forests do not only provide benefits, but can in certain cases also incur costs to humans. Forests may impose an economic burden, diminish the enjoyment of natural areas, reduce the food producing capacity of grazing land and cultivated land, reduce biodiversity reduce available water for humans and wildlife, harbour dangerous or destructive wildlife, and act as reservoirs of human and livestock disease. The management of forests is often referred to as forestry. Forest management has changed considerably over the last few centuries, with rapid changes from the 1980s onwards culminating in a practice now referred to\nForestry Forestry is the science and craft of creating, managing, using, conserving, and repairing forests, woodlands, and associated resources for human and environmental benefits. Forestry is practiced in plantations and natural stands. The science of forestry has elements that belong to the biological, physical, social, political and managerial sciences. Modern forestry generally embraces a broad range of concerns, in what is known as multiple-use management, including the provision of timber, fuel wood, wildlife habitat, natural water quality management, recreation, landscape and community protection, employment, aesthetically appealing landscapes, biodiversity management, watershed management, erosion control, and preserving forests as \"sinks\" for atmospheric\nForest A forest is a large area dominated by trees. Hundreds of more precise definitions of forest are used throughout the world, incorporating factors such as tree density, tree height, land use, legal standing and ecological function. According to the widely used Food and Agriculture Organization definition, forests covered (15 million square miles) or approximately 30 percent of the world's land area in 2006. Forests are the dominant terrestrial ecosystem of Earth, and are distributed around the globe. Forests account for 75% of the gross primary production of the Earth's biosphere, and contain 80% of the Earth's plant biomass. Net\nincluding harvesting forest resources, can negatively affect forest ecosystems. Although \"forest\" is a term of common parlance, there is no universally recognised precise definition, with more than 800 definitions of forest used around the world. Although a forest is usually defined by the presence of trees, under many definitions an area completely lacking trees may still be considered a forest if it grew trees in the past, will grow trees in the future, or was legally designated as a forest regardless of vegetation type. There are three broad categories of forest definitions in use: administrative, land use, and land cover.\nForest Peoples Programme Forest Peoples Programme (FPP) advocates an alternative vision of how forests should be managed and controlled, based on respect for the rights of the peoples who know them best. FPP works with forest peoples in South America, Africa, and Asia, to help them secure their rights, build up their own organisations and negotiate with governments and companies as to how economic development and conservation are best achieved on their lands. Forests cover 31% of total land area of the planet. Of that, 12% are designated for the conservation of biological diversity and nearly all are inhabited. Many\nDescribe the various uses of forests to human beings?"
+    }
+   ],
+   "methods": [
+    {
+     "id": "ar",
+     "title": "AR",
+     "role": "ar",
+     "target": "gpu",
+     "bin": "libms_eagle2.so",
+     "args": [
+      "-m",
+      "${MODELS}/gpu/vicuna_q4_0_output4.gguf",
+      "-md",
+      "${MODELS}/gpu/EAGLE_q4_0_output4.gguf",
+      "-c",
+      "2048",
+      "-fa",
+      "off",
+      "-ngl",
+      "99",
+      "-ngld",
+      "99",
+      "--temp",
+      "0.0",
+      "--top-p",
+      "1.0",
+      "--min-p",
+      "0.0",
+      "-s",
+      "1234",
+      "-n",
+      "${N}",
+      "-f",
+      "${PROMPT_FILE}",
+      "--spec-draft-n-max",
+      "0"
+     ],
+     "files": [
+      {
+       "path": "gpu/vicuna_q4_0_output4.gguf"
+      },
+      {
+       "path": "gpu/EAGLE_q4_0_output4.gguf"
+      }
+     ],
+     "blurb": "Target-only greedy decoding through the EAGLE-2 driver (same tokenizer and sampler).",
+     "env": {}
+    },
+    {
+     "id": "mast",
+     "title": "MAST",
+     "role": "sd",
+     "target": "gpu",
+     "bin": "libms_mast.so",
+     "args": [
+      "-m",
+      "${MODELS}/gpu/vicuna_q4_0_output4.gguf",
+      "-md",
+      "${MODELS}/gpu/EAGLE_q4_0_output4.gguf",
+      "-c",
+      "2048",
+      "-fa",
+      "off",
+      "-ngl",
+      "99",
+      "-ngld",
+      "99",
+      "--temp",
+      "0.0",
+      "--top-p",
+      "1.0",
+      "--min-p",
+      "0.0",
+      "-s",
+      "1234",
+      "-n",
+      "${N}",
+      "-f",
+      "${PROMPT_FILE}",
+      "--mode",
+      "eagle2",
+      "--spec-draft-n-max",
+      "100",
+      "--spec-draft-n-min",
+      "1",
+      "--top-k",
+      "5",
+      "--n-depth",
+      "5",
+      "--rerank-k",
+      "7",
+      "--cast",
+      "--cast-lambda",
+      "0.06",
+      "--cast-cw",
+      "3.3",
+      "--cast-cd",
+      "6.7"
+     ],
+     "files": [
+      {
+       "path": "gpu/vicuna_q4_0_output4.gguf"
+      },
+      {
+       "path": "gpu/EAGLE_q4_0_output4.gguf"
+      }
+     ],
+     "blurb": "Keeps a draft node only if its cumulative probability pays for the width or depth it costs.",
+     "env": {}
+    }
+   ]
+  },
+  {
+   "id": "gpu-llama3-8b",
+   "title": "Llama-3-8B on the GPU: AR vs MAST (spare)",
+   "subtitle": "Adreno GPU target and EAGLE-1/2 draft with a full-vocabulary head (--no-mmap on the device)",
+   "backend": "GPU",
+   "drafter": "GPU",
+   "kind": "LLM",
+   "n_predict": 128,
+   "headline": "decode",
+   "prompt_format": "<|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n",
+   "custom_prompt": true,
+   "lossless_note": "The GPU has no AR run on the verify kernels: verification scores a batch of tree tokens, AR one token at a time, and OpenCL rounds the two differently, so at a near-tie the greedy texts can part. Both are greedy decodes of the same model.",
+   "prompts": [
+    {
+     "id": "sb00-writing",
+     "title": "writing",
+     "category": "writing",
+     "text": "Compose an engaging travel blog post about a recent trip to Hawaii, highlighting cultural experiences and must-see attractions."
+    },
+    {
+     "id": "sb01-roleplay",
+     "title": "roleplay",
+     "category": "roleplay",
+     "text": "Pretend yourself to be Elon Musk in all the following conversations. Speak like Elon Musk as much as possible. Why do we need to go to Mars?"
+    },
+    {
+     "id": "sb02-reasoning",
+     "title": "reasoning",
+     "category": "reasoning",
+     "text": "Imagine you are participating in a race with a group of people. If you have just overtaken the second person, what's your current position? Where is the person you just overtook?"
+    },
+    {
+     "id": "sb03-math",
+     "title": "math",
+     "category": "math",
+     "text": "The vertices of a triangle are at points (0, 0), (-1, 1), and (3, 3). What is the area of the triangle?"
+    },
+    {
+     "id": "sb04-coding",
+     "title": "coding",
+     "category": "coding",
+     "text": "Develop a Python program that reads all the text files under a directory and returns top-5 words with the most number of occurrences."
+    },
+    {
+     "id": "sb05-extraction",
+     "title": "extraction",
+     "category": "extraction",
+     "text": "Evaluate the following movie reviews on a scale of 1 to 5, with 1 being very negative, 3 being neutral, and 5 being very positive:\n1. This movie released on Nov. 18, 2019, was phenomenal. The cinematography, the acting, the plot - everything was top-notch.\n2. Never before have I been so disappointed with a movie. The plot was predictable and the characters were one-dimensional. In my opinion, this movie is the worst one to have been released in 2022.\n3. The movie was okay. There were some parts I  enjoyed, but there were also parts that felt lackluster. This is a movie that was released in Feb 2018 and seems to be quite ordinary.\nReturn the answer as a JSON array of integers."
+    },
+    {
+     "id": "sb06-stem",
+     "title": "stem",
+     "category": "stem",
+     "text": "In the field of quantum physics, what is superposition, and how does it relate to the phenomenon of quantum entanglement?"
+    },
+    {
+     "id": "sb07-humanities",
+     "title": "humanities",
+     "category": "humanities",
+     "text": "Provide insights into the correlation between economic indicators such as GDP, inflation, and unemployment rates. Explain how fiscal and monetary policies affect those indicators."
+    },
+    {
+     "id": "sb08-translation",
+     "title": "translation",
+     "category": "translation",
+     "text": "Translate German to English: Pfandhäuser boomen in Singapur , da die Krise in der Mittelschicht angekommen ist"
+    },
+    {
+     "id": "sb09-summarization",
+     "title": "summarization",
+     "category": "summarization",
+     "text": "Summarize: Hillary Clinton’s security detail arrived at a suburban Des Moines, Iowa fruit processing company on Tuesday with an added vehicle – a second Scooby. After her signature oversize black Chevy conversion van dropped her off at Capitol Fruit Company in Norwalk, Iowa, a visually identical GMC van drove up to the building with a nearly identical Secret Service escort vehicle. Both armored vehicles have raised roofs, deep-tinted windows and New York license plates. But while the original van – the one nicknamed 'Scooby' after the Scooby-Doo cartoon show – sports a mustard-yellow New York tag, the second has blue and white plates of a different design. Scroll down for video. WHY BUY ONE WHEN YOU CAN HAVE TWO AT TWICE THE PRICE? The first picture of both of Hillary Clinton's Scooby mobiles. One is a GMC and the other is a Chevrolet, but they are mechanically identical. CONVOY: Scooby-one and Scooby-two took up positions in Hillary's motorcade on a freeway near Des Moines. BACK SEAT DRIVER? Hillary Clinton climbs into the so-called Scooby van after a campaign stop at Capital City Fruit in Norwalk, Iowa. Clinton (right), a Democratic presidential hopeful and former secretary of state, posed for selfies with fans after meeting with members of the Iowa State legislature at the State Capital on Wednesday. It’s common for U.S. Secret Service to employ 'decoy' vehicles, identical in design, in order to inject some mystery into VIPs' travel plans, if for no other reason than to confuse and discourage would-be attackers. When President Barack Obama returns to the White House after long trips, his arrival on the Marine One helicopter can be a shell-game exercise when three identical choppers appear on the horizon. Only one, of course, lands on the South Lawn. A Secret Service spokesperson said the agency does not comment on security arrangements for dignitaries. FLASHERS: 'Scooby-two' forced an Iowa motorist to leave the roadway on Wednesday so it could go through a red light and rejoin the caravan. Mrs. Clinton enjoys constant protection at taxpayers' expense because she is part of a former first family, not as a result of her service in the U.S. Senate or the State Department. But at some point during presidential campaigns, front-runner status generally attracts Secret Service as a candidate’s profile is elevated and crowd sizes swell. On Wednesday, the two Scooby vans arrived at Clinton's appointed location separately, but left together in a seven-car motorcade. UNDER GUARD: Two Secret Service agents with Scooby One in Iowa today. MOTORCADE: The Clinton convoy includes both Scooby vans and four black Suburbans, believed to all be Secret Service vehicles. It also included a white minivan on Wednesday. Scooby-Two’s driver brought up the rear, at enough of a distance to allow another car to pull in front of him. When that car stopped at a red light, the GMC van’s blue and red flashing lights came on. The stray car’s driver pulled to one side and Scooby-Two zoomed into the intersection, against the light. DECOYS: The Secret Service frequently deploys duplicates of aircraft and cars it uses to transport VIPs – including Marine One, the president's customized helicopter, which usually travels with two decoys."
+    },
+    {
+     "id": "sb10-qa",
+     "title": "qa",
+     "category": "qa",
+     "text": "Who played anna in once upon a time?"
+    },
+    {
+     "id": "sb11-math_reasoning",
+     "title": "math reasoning",
+     "category": "math_reasoning",
+     "text": "Jen decides to travel to 3 different countries.  He has to pay $400 for the supplies he needs, in total.  The tickets for travel cost, in total, 50% more than the supplies.  How much does travel cost?"
+    },
+    {
+     "id": "sb12-rag",
+     "title": "rag",
+     "category": "rag",
+     "text": "Some researchers state that forests do not only provide benefits, but can in certain cases also incur costs to humans. Forests may impose an economic burden, diminish the enjoyment of natural areas, reduce the food producing capacity of grazing land and cultivated land, reduce biodiversity reduce available water for humans and wildlife, harbour dangerous or destructive wildlife, and act as reservoirs of human and livestock disease. The management of forests is often referred to as forestry. Forest management has changed considerably over the last few centuries, with rapid changes from the 1980s onwards culminating in a practice now referred to\nForestry Forestry is the science and craft of creating, managing, using, conserving, and repairing forests, woodlands, and associated resources for human and environmental benefits. Forestry is practiced in plantations and natural stands. The science of forestry has elements that belong to the biological, physical, social, political and managerial sciences. Modern forestry generally embraces a broad range of concerns, in what is known as multiple-use management, including the provision of timber, fuel wood, wildlife habitat, natural water quality management, recreation, landscape and community protection, employment, aesthetically appealing landscapes, biodiversity management, watershed management, erosion control, and preserving forests as \"sinks\" for atmospheric\nForest A forest is a large area dominated by trees. Hundreds of more precise definitions of forest are used throughout the world, incorporating factors such as tree density, tree height, land use, legal standing and ecological function. According to the widely used Food and Agriculture Organization definition, forests covered (15 million square miles) or approximately 30 percent of the world's land area in 2006. Forests are the dominant terrestrial ecosystem of Earth, and are distributed around the globe. Forests account for 75% of the gross primary production of the Earth's biosphere, and contain 80% of the Earth's plant biomass. Net\nincluding harvesting forest resources, can negatively affect forest ecosystems. Although \"forest\" is a term of common parlance, there is no universally recognised precise definition, with more than 800 definitions of forest used around the world. Although a forest is usually defined by the presence of trees, under many definitions an area completely lacking trees may still be considered a forest if it grew trees in the past, will grow trees in the future, or was legally designated as a forest regardless of vegetation type. There are three broad categories of forest definitions in use: administrative, land use, and land cover.\nForest Peoples Programme Forest Peoples Programme (FPP) advocates an alternative vision of how forests should be managed and controlled, based on respect for the rights of the peoples who know them best. FPP works with forest peoples in South America, Africa, and Asia, to help them secure their rights, build up their own organisations and negotiate with governments and companies as to how economic development and conservation are best achieved on their lands. Forests cover 31% of total land area of the planet. Of that, 12% are designated for the conservation of biological diversity and nearly all are inhabited. Many\nDescribe the various uses of forests to human beings?"
+    }
+   ],
+   "methods": [
+    {
+     "id": "ar",
+     "title": "AR",
+     "role": "ar",
+     "target": "gpu",
+     "bin": "libms_eagle2.so",
+     "args": [
+      "-m",
+      "${MODELS}/gpu/llama-38i_q4_0_output4.gguf",
+      "-md",
+      "${MODELS}/gpu/EAGLE-llama38i_q4_0_output4.gguf",
+      "-c",
+      "4096",
+      "-fa",
+      "off",
+      "-ngl",
+      "99",
+      "-ngld",
+      "99",
+      "--temp",
+      "0.0",
+      "--top-p",
+      "1.0",
+      "--min-p",
+      "0.0",
+      "-s",
+      "1234",
+      "-n",
+      "${N}",
+      "--no-mmap",
+      "-f",
+      "${PROMPT_FILE}",
+      "--spec-draft-n-max",
+      "0"
+     ],
+     "files": [
+      {
+       "path": "gpu/llama-38i_q4_0_output4.gguf"
+      },
+      {
+       "path": "gpu/EAGLE-llama38i_q4_0_output4.gguf"
+      }
+     ],
+     "blurb": "Target-only greedy decoding through the EAGLE-2 driver (same tokenizer and sampler).",
+     "env": {}
+    },
+    {
+     "id": "mast",
+     "title": "MAST",
+     "role": "sd",
+     "target": "gpu",
+     "bin": "libms_mast.so",
+     "args": [
+      "-m",
+      "${MODELS}/gpu/llama-38i_q4_0_output4.gguf",
+      "-md",
+      "${MODELS}/gpu/EAGLE-llama38i_q4_0_output4.gguf",
+      "-c",
+      "4096",
+      "-fa",
+      "off",
+      "-ngl",
+      "99",
+      "-ngld",
+      "99",
+      "--temp",
+      "0.0",
+      "--top-p",
+      "1.0",
+      "--min-p",
+      "0.0",
+      "-s",
+      "1234",
+      "-n",
+      "${N}",
+      "--no-mmap",
+      "-f",
+      "${PROMPT_FILE}",
+      "--mode",
+      "eagle2",
+      "--spec-draft-n-max",
+      "100",
+      "--spec-draft-n-min",
+      "1",
+      "--top-k",
+      "5",
+      "--n-depth",
+      "5",
+      "--rerank-k",
+      "7",
+      "--cast",
+      "--cast-lambda",
+      "0.06",
+      "--cast-cw",
+      "3.2",
+      "--cast-cd",
+      "15.8"
+     ],
+     "files": [
+      {
+       "path": "gpu/llama-38i_q4_0_output4.gguf"
+      },
+      {
+       "path": "gpu/EAGLE-llama38i_q4_0_output4.gguf"
+      }
+     ],
+     "blurb": "Same driver; the full-vocabulary EAGLE head makes each draft level expensive on this pair.",
+     "env": {}
+    }
+   ]
+  },
+  {
+   "id": "npu-qwen3-4b",
+   "title": "Qwen3-4B on the NPU: AR vs DFlash / PCTree / DARTree",
+   "subtitle": "Hexagon NPU target (6 shards) and Hexagon NPU w4a16 block drafter",
+   "backend": "NPU",
+   "drafter": "NPU",
+   "kind": "LLM",
+   "n_predict": 128,
+   "headline": "decode",
+   "prompt_format": null,
+   "custom_prompt": true,
+   "prompts": [
+    {
+     "id": "sb00-writing",
+     "title": "writing",
+     "category": "writing",
+     "text": "Compose an engaging travel blog post about a recent trip to Hawaii, highlighting cultural experiences and must-see attractions."
+    },
+    {
+     "id": "sb01-roleplay",
+     "title": "roleplay",
+     "category": "roleplay",
+     "text": "Pretend yourself to be Elon Musk in all the following conversations. Speak like Elon Musk as much as possible. Why do we need to go to Mars?"
+    },
+    {
+     "id": "sb02-reasoning",
+     "title": "reasoning",
+     "category": "reasoning",
+     "text": "Imagine you are participating in a race with a group of people. If you have just overtaken the second person, what's your current position? Where is the person you just overtook?"
+    },
+    {
+     "id": "sb03-math",
+     "title": "math",
+     "category": "math",
+     "text": "The vertices of a triangle are at points (0, 0), (-1, 1), and (3, 3). What is the area of the triangle?"
+    },
+    {
+     "id": "sb04-coding",
+     "title": "coding",
+     "category": "coding",
+     "text": "Develop a Python program that reads all the text files under a directory and returns top-5 words with the most number of occurrences."
+    },
+    {
+     "id": "sb05-extraction",
+     "title": "extraction",
+     "category": "extraction",
+     "text": "Evaluate the following movie reviews on a scale of 1 to 5, with 1 being very negative, 3 being neutral, and 5 being very positive:\n1. This movie released on Nov. 18, 2019, was phenomenal. The cinematography, the acting, the plot - everything was top-notch.\n2. Never before have I been so disappointed with a movie. The plot was predictable and the characters were one-dimensional. In my opinion, this movie is the worst one to have been released in 2022.\n3. The movie was okay. There were some parts I  enjoyed, but there were also parts that felt lackluster. This is a movie that was released in Feb 2018 and seems to be quite ordinary.\nReturn the answer as a JSON array of integers."
+    },
+    {
+     "id": "sb06-stem",
+     "title": "stem",
+     "category": "stem",
+     "text": "In the field of quantum physics, what is superposition, and how does it relate to the phenomenon of quantum entanglement?"
+    },
+    {
+     "id": "sb07-humanities",
+     "title": "humanities",
+     "category": "humanities",
+     "text": "Provide insights into the correlation between economic indicators such as GDP, inflation, and unemployment rates. Explain how fiscal and monetary policies affect those indicators."
+    },
+    {
+     "id": "sb08-translation",
+     "title": "translation",
+     "category": "translation",
+     "text": "Translate German to English: Pfandhäuser boomen in Singapur , da die Krise in der Mittelschicht angekommen ist"
+    },
+    {
+     "id": "sb09-summarization",
+     "title": "summarization",
+     "category": "summarization",
+     "text": "Summarize: Hillary Clinton’s security detail arrived at a suburban Des Moines, Iowa fruit processing company on Tuesday with an added vehicle – a second Scooby. After her signature oversize black Chevy conversion van dropped her off at Capitol Fruit Company in Norwalk, Iowa, a visually identical GMC van drove up to the building with a nearly identical Secret Service escort vehicle. Both armored vehicles have raised roofs, deep-tinted windows and New York license plates. But while the original van – the one nicknamed 'Scooby' after the Scooby-Doo cartoon show – sports a mustard-yellow New York tag, the second has blue and white plates of a different design. Scroll down for video. WHY BUY ONE WHEN YOU CAN HAVE TWO AT TWICE THE PRICE? The first picture of both of Hillary Clinton's Scooby mobiles. One is a GMC and the other is a Chevrolet, but they are mechanically identical. CONVOY: Scooby-one and Scooby-two took up positions in Hillary's motorcade on a freeway near Des Moines. BACK SEAT DRIVER? Hillary Clinton climbs into the so-called Scooby van after a campaign stop at Capital City Fruit in Norwalk, Iowa. Clinton (right), a Democratic presidential hopeful and former secretary of state, posed for selfies with fans after meeting with members of the Iowa State legislature at the State Capital on Wednesday. It’s common for U.S. Secret Service to employ 'decoy' vehicles, identical in design, in order to inject some mystery into VIPs' travel plans, if for no other reason than to confuse and discourage would-be attackers. When President Barack Obama returns to the White House after long trips, his arrival on the Marine One helicopter can be a shell-game exercise when three identical choppers appear on the horizon. Only one, of course, lands on the South Lawn. A Secret Service spokesperson said the agency does not comment on security arrangements for dignitaries. FLASHERS: 'Scooby-two' forced an Iowa motorist to leave the roadway on Wednesday so it could go through a red light and rejoin the caravan. Mrs. Clinton enjoys constant protection at taxpayers' expense because she is part of a former first family, not as a result of her service in the U.S. Senate or the State Department. But at some point during presidential campaigns, front-runner status generally attracts Secret Service as a candidate’s profile is elevated and crowd sizes swell. On Wednesday, the two Scooby vans arrived at Clinton's appointed location separately, but left together in a seven-car motorcade. UNDER GUARD: Two Secret Service agents with Scooby One in Iowa today. MOTORCADE: The Clinton convoy includes both Scooby vans and four black Suburbans, believed to all be Secret Service vehicles. It also included a white minivan on Wednesday. Scooby-Two’s driver brought up the rear, at enough of a distance to allow another car to pull in front of him. When that car stopped at a red light, the GMC van’s blue and red flashing lights came on. The stray car’s driver pulled to one side and Scooby-Two zoomed into the intersection, against the light. DECOYS: The Secret Service frequently deploys duplicates of aircraft and cars it uses to transport VIPs – including Marine One, the president's customized helicopter, which usually travels with two decoys."
+    },
+    {
+     "id": "sb10-qa",
+     "title": "qa",
+     "category": "qa",
+     "text": "Who played anna in once upon a time?"
+    },
+    {
+     "id": "sb11-math_reasoning",
+     "title": "math reasoning",
+     "category": "math_reasoning",
+     "text": "Jen decides to travel to 3 different countries.  He has to pay $400 for the supplies he needs, in total.  The tickets for travel cost, in total, 50% more than the supplies.  How much does travel cost?"
+    },
+    {
+     "id": "sb12-rag",
+     "title": "rag",
+     "category": "rag",
+     "text": "Some researchers state that forests do not only provide benefits, but can in certain cases also incur costs to humans. Forests may impose an economic burden, diminish the enjoyment of natural areas, reduce the food producing capacity of grazing land and cultivated land, reduce biodiversity reduce available water for humans and wildlife, harbour dangerous or destructive wildlife, and act as reservoirs of human and livestock disease. The management of forests is often referred to as forestry. Forest management has changed considerably over the last few centuries, with rapid changes from the 1980s onwards culminating in a practice now referred to\nForestry Forestry is the science and craft of creating, managing, using, conserving, and repairing forests, woodlands, and associated resources for human and environmental benefits. Forestry is practiced in plantations and natural stands. The science of forestry has elements that belong to the biological, physical, social, political and managerial sciences. Modern forestry generally embraces a broad range of concerns, in what is known as multiple-use management, including the provision of timber, fuel wood, wildlife habitat, natural water quality management, recreation, landscape and community protection, employment, aesthetically appealing landscapes, biodiversity management, watershed management, erosion control, and preserving forests as \"sinks\" for atmospheric\nForest A forest is a large area dominated by trees. Hundreds of more precise definitions of forest are used throughout the world, incorporating factors such as tree density, tree height, land use, legal standing and ecological function. According to the widely used Food and Agriculture Organization definition, forests covered (15 million square miles) or approximately 30 percent of the world's land area in 2006. Forests are the dominant terrestrial ecosystem of Earth, and are distributed around the globe. Forests account for 75% of the gross primary production of the Earth's biosphere, and contain 80% of the Earth's plant biomass. Net\nincluding harvesting forest resources, can negatively affect forest ecosystems. Although \"forest\" is a term of common parlance, there is no universally recognised precise definition, with more than 800 definitions of forest used around the world. Although a forest is usually defined by the presence of trees, under many definitions an area completely lacking trees may still be considered a forest if it grew trees in the past, will grow trees in the future, or was legally designated as a forest regardless of vegetation type. There are three broad categories of forest definitions in use: administrative, land use, and land cover.\nForest Peoples Programme Forest Peoples Programme (FPP) advocates an alternative vision of how forests should be managed and controlled, based on respect for the rights of the peoples who know them best. FPP works with forest peoples in South America, Africa, and Asia, to help them secure their rights, build up their own organisations and negotiate with governments and companies as to how economic development and conservation are best achieved on their lands. Forests cover 31% of total land area of the planet. Of that, 12% are designated for the conservation of biological diversity and nearly all are inhabited. Many\nDescribe the various uses of forests to human beings?"
+    }
+   ],
+   "methods": [
+    {
+     "id": "ar",
+     "title": "AR",
+     "role": "ar",
+     "target": "a32",
+     "bin": "libms_simple_qnn.so",
+     "args": [
+      "--qnn",
+      "--multi-context",
+      "--ctx-dir",
+      "${MODELS}/npu/llm/ctx_ar32",
+      "--tokenizer",
+      "${MODELS}/npu/llm/Qwen3-4B-q4_0-outq4.gguf",
+      "--params",
+      "${MODELS}/npu/llm/ctx_ar32/params.json",
+      "--log-level",
+      "1",
+      "-n",
+      "${N}",
+      "-c",
+      "1024",
+      "-f",
+      "${PROMPT_FILE}"
+     ],
+     "env": {
+      "QNN_CHAT": "1"
+     },
+     "files": [
+      {
+       "path": "npu/llm/ctx_ar32/params.json"
+      },
+      {
+       "path": "npu/llm/Qwen3-4B-q4_0-outq4.gguf"
+      },
+      {
+       "path": "npu/draft4b_embd_f16.bin"
+      }
+     ],
+     "blurb": "Target-only decoding on the NPU (the AR baseline of every published xAR)."
+    },
+    {
+     "id": "ref-a32",
+     "title": "AR (A32 graph)",
+     "role": "ref",
+     "target": "a32",
+     "bin": "libms_vlm_run.so",
+     "args": [
+      "--qnn",
+      "--multi-context",
+      "--ctx-dir",
+      "${MODELS}/npu/llm/ctx_ar32",
+      "--tokenizer",
+      "${MODELS}/npu/llm/Qwen3-4B-q4_0-outq4.gguf",
+      "--params",
+      "${MODELS}/npu/llm/ctx_ar32/params.json",
+      "--log-level",
+      "1",
+      "-n",
+      "${N}",
+      "-c",
+      "1024",
+      "--num-shards",
+      "6",
+      "--temp",
+      "0",
+      "-f",
+      "${PROMPT_FILE}"
+     ],
+     "env": {
+      "QNN_A32_ONLY": "1"
+     },
+     "files": [
+      {
+       "path": "npu/llm/ctx_ar32/params.json"
+      },
+      {
+       "path": "npu/llm/Qwen3-4B-q4_0-outq4.gguf"
+      },
+      {
+       "path": "npu/draft4b_embd_f16.bin"
+      }
+     ],
+     "blurb": "Greedy reference on the verification graph, for the token-for-token lossless check."
+    },
+    {
+     "id": "dflash",
+     "title": "DFlash",
+     "role": "sd",
+     "target": "a32",
+     "bin": "libms_dflash_npu.so",
+     "args": [
+      "--qnn",
+      "--multi-context",
+      "--ctx-dir",
+      "${MODELS}/npu/llm/ctx_ar32",
+      "--tokenizer",
+      "${MODELS}/npu/llm/Qwen3-4B-q4_0-outq4.gguf",
+      "--params",
+      "${MODELS}/npu/llm/ctx_ar32/params.json",
+      "--log-level",
+      "1",
+      "-n",
+      "${N}",
+      "-c",
+      "1024",
+      "--temp",
+      "0.0",
+      "-f",
+      "${PROMPT_FILE}"
+     ],
+     "env": {
+      "DFLASH_CHAT": "1",
+      "DFLASH_DRAFT_EMBD": "${MODELS}/npu/draft4b_embd_f16.bin",
+      "DFLASH_DRAFT_CTX": "${MODELS}/npu/llm/ctx_dflash4b_w4ne",
+      "DFLASH_DRAFT_PARAMS": "${MODELS}/npu/llm/ctx_dflash4b_w4ne/params.json"
+     },
+     "files": [
+      {
+       "path": "npu/llm/ctx_ar32/params.json"
+      },
+      {
+       "path": "npu/llm/Qwen3-4B-q4_0-outq4.gguf"
+      },
+      {
+       "path": "npu/draft4b_embd_f16.bin"
+      },
+      {
+       "path": "npu/llm/ctx_dflash4b_w4ne/params.json"
+      }
+     ],
+     "blurb": "Block drafter proposes 7 tokens in one NPU call; chain verification."
+    },
+    {
+     "id": "pctree",
+     "title": "PCTree",
+     "role": "sd",
+     "target": "a32",
+     "bin": "libms_dflash_npu.so",
+     "args": [
+      "--qnn",
+      "--multi-context",
+      "--ctx-dir",
+      "${MODELS}/npu/llm/ctx_ar32",
+      "--tokenizer",
+      "${MODELS}/npu/llm/Qwen3-4B-q4_0-outq4.gguf",
+      "--params",
+      "${MODELS}/npu/llm/ctx_ar32/params.json",
+      "--log-level",
+      "1",
+      "-n",
+      "${N}",
+      "-c",
+      "1024",
+      "--temp",
+      "0.0",
+      "-f",
+      "${PROMPT_FILE}"
+     ],
+     "env": {
+      "DFLASH_CHAT": "1",
+      "DFLASH_DRAFT_EMBD": "${MODELS}/npu/draft4b_embd_f16.bin",
+      "DFLASH_DRAFT_CTX": "${MODELS}/npu/llm/ctx_dspark4b_w4ne",
+      "DFLASH_DRAFT_PARAMS": "${MODELS}/npu/llm/ctx_dspark4b_w4ne/params.json",
+      "DFLASH_PCTREE": "23",
+      "DFLASH_PCK": "4",
+      "DFLASH_PCTOPN": "256",
+      "DFLASH_PCEXACT": "0",
+      "DFLASH_MARKOV_GGUF": "${MODELS}/npu/llm/Qwen3-4B-DSpark-b7-q4_0-emb.gguf"
+     },
+     "files": [
+      {
+       "path": "npu/llm/ctx_ar32/params.json"
+      },
+      {
+       "path": "npu/llm/Qwen3-4B-q4_0-outq4.gguf"
+      },
+      {
+       "path": "npu/draft4b_embd_f16.bin"
+      },
+      {
+       "path": "npu/llm/ctx_dspark4b_w4ne/params.json"
+      },
+      {
+       "path": "npu/llm/Qwen3-4B-DSpark-b7-q4_0-emb.gguf"
+      }
+     ],
+     "blurb": "Per-parent re-scored tree from one block call, budget 23."
+    },
+    {
+     "id": "dartree",
+     "title": "DARTree",
+     "role": "sd",
+     "target": "a32",
+     "bin": "libms_dflash_npu.so",
+     "args": [
+      "--qnn",
+      "--multi-context",
+      "--ctx-dir",
+      "${MODELS}/npu/llm/ctx_ar32",
+      "--tokenizer",
+      "${MODELS}/npu/llm/Qwen3-4B-q4_0-outq4.gguf",
+      "--params",
+      "${MODELS}/npu/llm/ctx_ar32/params.json",
+      "--log-level",
+      "1",
+      "-n",
+      "${N}",
+      "-c",
+      "1024",
+      "--temp",
+      "0.0",
+      "-f",
+      "${PROMPT_FILE}"
+     ],
+     "env": {
+      "DFLASH_CHAT": "1",
+      "DFLASH_DRAFT_EMBD": "${MODELS}/npu/draft4b_embd_f16.bin",
+      "DFLASH_DRAFT_CTX": "${MODELS}/npu/llm/ctx_dspark4b_w4ne",
+      "DFLASH_DRAFT_PARAMS": "${MODELS}/npu/llm/ctx_dspark4b_w4ne/params.json",
+      "DFLASH_DARTREE": "31",
+      "DFLASH_DARW": "8",
+      "DFLASH_MARKOV_GGUF": "${MODELS}/npu/llm/Qwen3-4B-DSpark-b7-q4_0-emb.gguf"
+     },
+     "files": [
+      {
+       "path": "npu/llm/ctx_ar32/params.json"
+      },
+      {
+       "path": "npu/llm/Qwen3-4B-q4_0-outq4.gguf"
+      },
+      {
+       "path": "npu/draft4b_embd_f16.bin"
+      },
+      {
+       "path": "npu/llm/ctx_dspark4b_w4ne/params.json"
+      },
+      {
+       "path": "npu/llm/Qwen3-4B-DSpark-b7-q4_0-emb.gguf"
+      }
+     ],
+     "blurb": "Global (parent, candidate) layer selection, budget 31."
+    }
+   ]
+  },
+  {
+   "id": "npu-qwen3vl-4b",
+   "title": "Qwen3-VL-4B document QA on the NPU: AR vs None / Full / Ours",
+   "subtitle": "NPU target (6 shards, 4,096 context) and NPU block drafter; vision features precomputed per page",
+   "backend": "NPU",
+   "drafter": "NPU",
+   "kind": "VLM",
+   "n_predict": 128,
+   "headline": "generation",
+   "prompt_format": null,
+   "custom_prompt": false,
+   "prompts": [
+    {
+     "id": "doc2-infographic-00-1024",
+     "title": "infographic 1156 img tok",
+     "category": "infographic",
+     "text": "Answer the following questions about this document. Give each answer as one complete sentence that includes the supporting detail from the document.\n1. How many prescriptions were delivered?\n2. How many vulnerable residents were paired with a buddy?\n3. What was the total grants paid to small businesses (£m)?",
+     "fixture": "npu/vlm/presets/doc2-infographic-00-1024",
+     "image": "npu/vlm/presets/doc2-infographic-00-1024.jpg"
+    },
+    {
+     "id": "doc2-docvqa-00-293",
+     "title": "docvqa 3038 img tok",
+     "category": "docvqa",
+     "text": "What is the total amount in the invoice?\nAnswer in two or three complete sentences, and quote the exact text or numbers from the document that support your answer.",
+     "fixture": "npu/vlm/presets/doc2-docvqa-00-293",
+     "image": "npu/vlm/presets/doc2-docvqa-00-293.png"
+    },
+    {
+     "id": "doc2-docvqa-05-342",
+     "title": "docvqa 3024 img tok",
+     "category": "docvqa",
+     "text": "Answer the following questions about this document. Give each answer as one complete sentence that includes the supporting detail from the document.\n1. On which date this letter was written ?\n2. What is the designation of dr. paul d. salt man ?\n3. Who's sign was there at the end of the letter ?",
+     "fixture": "npu/vlm/presets/doc2-docvqa-05-342",
+     "image": "npu/vlm/presets/doc2-docvqa-05-342.png"
+    },
+    {
+     "id": "doc2-infographic-00-220",
+     "title": "infographic 368 img tok",
+     "category": "infographic",
+     "text": "Answer the following questions about this document. Give each answer as one complete sentence that includes the supporting detail from the document.\n1. What percentage of Suicides are caused by pedestrian accidents?\n2. What is fifth warning sign listed here?\n3. What percentage of Suicides are caused by Motorcycle accidents?",
+     "fixture": "npu/vlm/presets/doc2-infographic-00-220",
+     "image": "npu/vlm/presets/doc2-infographic-00-220.jpg"
+    },
+    {
+     "id": "doc2-chartqa-01-3101",
+     "title": "chartqa 425 img tok",
+     "category": "chartqa",
+     "text": "What percentage of Ukrainians said they do not have confidence in the Ukrainian government in 2015?\nAnswer in two or three complete sentences, and quote the exact text or numbers from the document that support your answer.",
+     "fixture": "npu/vlm/presets/doc2-chartqa-01-3101",
+     "image": "npu/vlm/presets/doc2-chartqa-01-3101.png"
+    }
+   ],
+   "methods": [
+    {
+     "id": "ar",
+     "title": "AR",
+     "role": "ar",
+     "target": "a32",
+     "bin": "libms_vlm_run.so",
+     "affinity": "3f",
+     "args": [
+      "--qnn",
+      "--multi-context",
+      "--ctx-dir",
+      "${MODELS}/npu/vlm/ctx_vlm_a32_c4096",
+      "--params",
+      "${MODELS}/npu/vlm/ctx_vlm_a32_c4096/params.json",
+      "--tokenizer",
+      "${MODELS}/npu/vlm/Qwen3-VL-4B-Instruct-Q4_0.gguf",
+      "--num-shards",
+      "6",
+      "--log-level",
+      "1",
+      "--kv-defrag",
+      "-f",
+      "${PROMPT_FILE}",
+      "-n",
+      "${N}",
+      "-c",
+      "4096",
+      "-t",
+      "2",
+      "--temp",
+      "0",
+      "--image-max-tokens",
+      "3072",
+      "--image",
+      "${IMAGE}"
+     ],
+     "env": {
+      "DFLASH_CHAT": "1",
+      "EAGLE3_CHAT": "1",
+      "QNN_A32_ONLY": "1",
+      "QNN_VLM_A32_ONLY": "1",
+      "QNN_DIRECT_LOGITS": "1",
+      "QNN_VERIFY_PROFILE": "0",
+      "QNN_VLM_EMBD": "${MODELS}/npu/vlm/target_embeddings.f16",
+      "QNN_VLM_LOAD": "${FIXTURE}",
+      "OMP_NUM_THREADS": "4",
+      "OMP_WAIT_POLICY": "PASSIVE",
+      "KMP_BLOCKTIME": "0"
+     },
+     "files": [
+      {
+       "path": "npu/vlm/target_embeddings.f16",
+       "bytes": 777912320
+      },
+      {
+       "path": "npu/vlm/Qwen3-VL-4B-Instruct-Q4_0.gguf"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.jpg"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.png"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.png"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.jpg"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.png"
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_0.bin",
+       "bytes": 138321920
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_0_json.json",
+       "bytes": 42110
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_1.bin",
+       "bytes": 588779520
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_1_json.json",
+       "bytes": 106025
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_2.bin",
+       "bytes": 605335552
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_2_json.json",
+       "bytes": 103881
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_3.bin",
+       "bytes": 584822784
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_3_json.json",
+       "bytes": 103885
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_4.bin",
+       "bytes": 598564864
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_4_json.json",
+       "bytes": 103893
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_5.bin",
+       "bytes": 542195712
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_5_json.json",
+       "bytes": 38321
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/io_contract.json",
+       "bytes": 6358
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/manifest.json",
+       "bytes": 525
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/params.json",
+       "bytes": 586
+      }
+     ],
+     "blurb": "Target-only decoding on the 32-row graph (reference of None and Full)."
+    },
+    {
+     "id": "ar-deep",
+     "title": "AR (deep target)",
+     "role": "ar",
+     "target": "deep32",
+     "bin": "libms_vlm_run.so",
+     "affinity": "3f",
+     "args": [
+      "--qnn",
+      "--multi-context",
+      "--ctx-dir",
+      "${MODELS}/npu/vlm/ctx_vlm_deep_a32_c4096_v2",
+      "--params",
+      "${MODELS}/npu/vlm/ctx_vlm_deep_a32_c4096_v2/params.json",
+      "--tokenizer",
+      "${MODELS}/npu/vlm/Qwen3-VL-4B-Instruct-Q4_0.gguf",
+      "--num-shards",
+      "6",
+      "--log-level",
+      "1",
+      "--kv-defrag",
+      "-f",
+      "${PROMPT_FILE}",
+      "-n",
+      "${N}",
+      "-c",
+      "4096",
+      "-t",
+      "2",
+      "--temp",
+      "0",
+      "--image-max-tokens",
+      "3072",
+      "--image",
+      "${IMAGE}"
+     ],
+     "env": {
+      "DFLASH_CHAT": "1",
+      "EAGLE3_CHAT": "1",
+      "QNN_A32_ONLY": "1",
+      "QNN_VLM_A32_ONLY": "1",
+      "QNN_DIRECT_LOGITS": "1",
+      "QNN_VERIFY_PROFILE": "0",
+      "QNN_VLM_EMBD": "${MODELS}/npu/vlm/target_embeddings.f16",
+      "QNN_VLM_LOAD": "${FIXTURE}",
+      "OMP_NUM_THREADS": "4",
+      "OMP_WAIT_POLICY": "PASSIVE",
+      "KMP_BLOCKTIME": "0"
+     },
+     "files": [
+      {
+       "path": "npu/vlm/target_embeddings.f16",
+       "bytes": 777912320
+      },
+      {
+       "path": "npu/vlm/Qwen3-VL-4B-Instruct-Q4_0.gguf"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.jpg"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.png"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.png"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.jpg"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.png"
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_0.bin",
+       "bytes": 138375168
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_0_json.json",
+       "bytes": 44293
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_1.bin",
+       "bytes": 589307904
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_1_json.json",
+       "bytes": 108217
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_2.bin",
+       "bytes": 605757440
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_2_json.json",
+       "bytes": 106070
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_3.bin",
+       "bytes": 585269248
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_3_json.json",
+       "bytes": 106077
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_4.bin",
+       "bytes": 599007232
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_4_json.json",
+       "bytes": 106087
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_5.bin",
+       "bytes": 542195712
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_5_json.json",
+       "bytes": 38325
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/io_contract.json",
+       "bytes": 8245
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/manifest.json",
+       "bytes": 525
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/params.json",
+       "bytes": 591
+      }
+     ],
+     "blurb": "Target-only decoding on the deep-register target graph (reference of Ours)."
+    },
+    {
+     "id": "none",
+     "title": "None",
+     "role": "sd",
+     "target": "a32",
+     "bin": "libms_dflash_npu.so",
+     "affinity": "3f",
+     "args": [
+      "--qnn",
+      "--multi-context",
+      "--ctx-dir",
+      "${MODELS}/npu/vlm/ctx_vlm_a32_c4096",
+      "--params",
+      "${MODELS}/npu/vlm/ctx_vlm_a32_c4096/params.json",
+      "--tokenizer",
+      "${MODELS}/npu/vlm/Qwen3-VL-4B-Instruct-Q4_0.gguf",
+      "--num-shards",
+      "6",
+      "--log-level",
+      "1",
+      "--kv-defrag",
+      "-f",
+      "${PROMPT_FILE}",
+      "-n",
+      "${N}",
+      "-c",
+      "4096",
+      "-t",
+      "2",
+      "--temp",
+      "0",
+      "--image-max-tokens",
+      "3072",
+      "--image",
+      "${IMAGE}"
+     ],
+     "env": {
+      "DFLASH_CHAT": "1",
+      "EAGLE3_CHAT": "1",
+      "QNN_A32_ONLY": "1",
+      "QNN_VLM_A32_ONLY": "1",
+      "QNN_DIRECT_LOGITS": "1",
+      "QNN_VERIFY_PROFILE": "0",
+      "QNN_VLM_EMBD": "${MODELS}/npu/vlm/target_embeddings.f16",
+      "QNN_VLM_LOAD": "${FIXTURE}",
+      "OMP_NUM_THREADS": "4",
+      "OMP_WAIT_POLICY": "PASSIVE",
+      "KMP_BLOCKTIME": "0",
+      "DFLASH_DRAFT_CTX": "${MODELS}/npu/vlm/ctx-none-20k-seed42",
+      "DFLASH_DRAFT_PARAMS": "${MODELS}/npu/vlm/ctx-none-20k-seed42/params.json",
+      "DFLASH_DRAFT_EMBD": "${MODELS}/npu/draft4b_embd_f16.bin",
+      "DFLASH_DDTREE": "31",
+      "DFLASH_DDK": "4",
+      "DFLASH_BLOCK": "8",
+      "DFLASH_NINJECT": "16",
+      "DFLASH_NHIDDEN": "5",
+      "DFLASH_MASKED_ROW_OUTPUT": "0",
+      "DFLASH_VLM_SUMMARY": "none"
+     },
+     "files": [
+      {
+       "path": "npu/vlm/target_embeddings.f16",
+       "bytes": 777912320
+      },
+      {
+       "path": "npu/vlm/Qwen3-VL-4B-Instruct-Q4_0.gguf"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.jpg"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.png"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.png"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.jpg"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.png"
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_0.bin",
+       "bytes": 138321920
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_0_json.json",
+       "bytes": 42110
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_1.bin",
+       "bytes": 588779520
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_1_json.json",
+       "bytes": 106025
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_2.bin",
+       "bytes": 605335552
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_2_json.json",
+       "bytes": 103881
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_3.bin",
+       "bytes": 584822784
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_3_json.json",
+       "bytes": 103885
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_4.bin",
+       "bytes": 598564864
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_4_json.json",
+       "bytes": 103893
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_5.bin",
+       "bytes": 542195712
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_5_json.json",
+       "bytes": 38321
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/io_contract.json",
+       "bytes": 6358
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/manifest.json",
+       "bytes": 525
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/params.json",
+       "bytes": 586
+      },
+      {
+       "path": "npu/vlm/ctx-none-20k-seed42/forward_0.bin",
+       "bytes": 703827968
+      },
+      {
+       "path": "npu/vlm/ctx-none-20k-seed42/forward_0_json.json",
+       "bytes": 77151
+      },
+      {
+       "path": "npu/vlm/ctx-none-20k-seed42/io-contract.json",
+       "bytes": 17845
+      },
+      {
+       "path": "npu/vlm/ctx-none-20k-seed42/params.json",
+       "bytes": 494
+      },
+      {
+       "path": "npu/vlm/ctx-none-20k-seed42/runtime-contract.json",
+       "bytes": 470
+      },
+      {
+       "path": "npu/draft4b_embd_f16.bin"
+      }
+     ],
+     "blurb": "Drafter sees the text only (no image rows): a short drafter prefill, lower acceptance."
+    },
+    {
+     "id": "full",
+     "title": "Full",
+     "role": "sd",
+     "target": "a32",
+     "bin": "libms_dflash_npu.so",
+     "affinity": "3f",
+     "args": [
+      "--qnn",
+      "--multi-context",
+      "--ctx-dir",
+      "${MODELS}/npu/vlm/ctx_vlm_a32_c4096",
+      "--params",
+      "${MODELS}/npu/vlm/ctx_vlm_a32_c4096/params.json",
+      "--tokenizer",
+      "${MODELS}/npu/vlm/Qwen3-VL-4B-Instruct-Q4_0.gguf",
+      "--num-shards",
+      "6",
+      "--log-level",
+      "1",
+      "--kv-defrag",
+      "-f",
+      "${PROMPT_FILE}",
+      "-n",
+      "${N}",
+      "-c",
+      "4096",
+      "-t",
+      "2",
+      "--temp",
+      "0",
+      "--image-max-tokens",
+      "3072",
+      "--image",
+      "${IMAGE}"
+     ],
+     "env": {
+      "DFLASH_CHAT": "1",
+      "EAGLE3_CHAT": "1",
+      "QNN_A32_ONLY": "1",
+      "QNN_VLM_A32_ONLY": "1",
+      "QNN_DIRECT_LOGITS": "1",
+      "QNN_VERIFY_PROFILE": "0",
+      "QNN_VLM_EMBD": "${MODELS}/npu/vlm/target_embeddings.f16",
+      "QNN_VLM_LOAD": "${FIXTURE}",
+      "OMP_NUM_THREADS": "4",
+      "OMP_WAIT_POLICY": "PASSIVE",
+      "KMP_BLOCKTIME": "0",
+      "DFLASH_DRAFT_CTX": "${MODELS}/npu/vlm/ctx-full-20k-seed42-c4096",
+      "DFLASH_DRAFT_PARAMS": "${MODELS}/npu/vlm/ctx-full-20k-seed42-c4096/params.json",
+      "DFLASH_DRAFT_EMBD": "${MODELS}/npu/draft4b_embd_f16.bin",
+      "DFLASH_DDTREE": "31",
+      "DFLASH_DDK": "4",
+      "DFLASH_BLOCK": "8",
+      "DFLASH_NINJECT": "16",
+      "DFLASH_NHIDDEN": "5",
+      "DFLASH_MASKED_ROW_OUTPUT": "0",
+      "DFLASH_VLM_SUMMARY": "full",
+      "DFLASH_DRAFT_PREFILL_CTX": "${MODELS}/npu/vlm/ctx-full-20k-seed42-inject256",
+      "DFLASH_DRAFT_PREFILL_PARAMS": "${MODELS}/npu/vlm/ctx-full-20k-seed42-inject256/params.json"
+     },
+     "files": [
+      {
+       "path": "npu/vlm/target_embeddings.f16",
+       "bytes": 777912320
+      },
+      {
+       "path": "npu/vlm/Qwen3-VL-4B-Instruct-Q4_0.gguf"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.jpg"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.png"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.png"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.jpg"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.png"
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_0.bin",
+       "bytes": 138321920
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_0_json.json",
+       "bytes": 42110
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_1.bin",
+       "bytes": 588779520
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_1_json.json",
+       "bytes": 106025
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_2.bin",
+       "bytes": 605335552
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_2_json.json",
+       "bytes": 103881
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_3.bin",
+       "bytes": 584822784
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_3_json.json",
+       "bytes": 103885
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_4.bin",
+       "bytes": 598564864
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_4_json.json",
+       "bytes": 103893
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_5.bin",
+       "bytes": 542195712
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/forward_5_json.json",
+       "bytes": 38321
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/io_contract.json",
+       "bytes": 6358
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/manifest.json",
+       "bytes": 525
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_a32_c4096/params.json",
+       "bytes": 586
+      },
+      {
+       "path": "npu/vlm/ctx-full-20k-seed42-c4096/forward_0.bin",
+       "bytes": 704565248
+      },
+      {
+       "path": "npu/vlm/ctx-full-20k-seed42-c4096/forward_0_json.json",
+       "bytes": 77147
+      },
+      {
+       "path": "npu/vlm/ctx-full-20k-seed42-c4096/io-contract.json",
+       "bytes": 17843
+      },
+      {
+       "path": "npu/vlm/ctx-full-20k-seed42-c4096/params.json",
+       "bytes": 494
+      },
+      {
+       "path": "npu/vlm/ctx-full-20k-seed42-c4096/runtime-contract.json",
+       "bytes": 519
+      },
+      {
+       "path": "npu/draft4b_embd_f16.bin"
+      },
+      {
+       "path": "npu/vlm/ctx-full-20k-seed42-inject256/forward_0.bin",
+       "bytes": 35414016
+      },
+      {
+       "path": "npu/vlm/ctx-full-20k-seed42-inject256/forward_0_json.json",
+       "bytes": 47633
+      },
+      {
+       "path": "npu/vlm/ctx-full-20k-seed42-inject256/io-contract.json",
+       "bytes": 11102
+      },
+      {
+       "path": "npu/vlm/ctx-full-20k-seed42-inject256/params.json",
+       "bytes": 536
+      },
+      {
+       "path": "npu/vlm/ctx-full-20k-seed42-inject256/runtime-contract.json",
+       "bytes": 752
+      }
+     ],
+     "blurb": "Drafter reads every image row: highest acceptance, but it prefills the whole page first (256-row inject graph, the fair setting of M4)."
+    },
+    {
+     "id": "ours",
+     "title": "Ours (dynamic registers)",
+     "role": "sd",
+     "target": "deep32",
+     "bin": "libms_dflash_npu.so",
+     "affinity": "3f",
+     "args": [
+      "--qnn",
+      "--multi-context",
+      "--ctx-dir",
+      "${MODELS}/npu/vlm/ctx_vlm_deep_a32_c4096_v2",
+      "--params",
+      "${MODELS}/npu/vlm/ctx_vlm_deep_a32_c4096_v2/params.json",
+      "--tokenizer",
+      "${MODELS}/npu/vlm/Qwen3-VL-4B-Instruct-Q4_0.gguf",
+      "--num-shards",
+      "6",
+      "--log-level",
+      "1",
+      "--kv-defrag",
+      "-f",
+      "${PROMPT_FILE}",
+      "-n",
+      "${N}",
+      "-c",
+      "4096",
+      "-t",
+      "2",
+      "--temp",
+      "0",
+      "--image-max-tokens",
+      "3072",
+      "--image",
+      "${IMAGE}"
+     ],
+     "env": {
+      "DFLASH_CHAT": "1",
+      "EAGLE3_CHAT": "1",
+      "QNN_A32_ONLY": "1",
+      "QNN_VLM_A32_ONLY": "1",
+      "QNN_DIRECT_LOGITS": "1",
+      "QNN_VERIFY_PROFILE": "0",
+      "QNN_VLM_EMBD": "${MODELS}/npu/vlm/target_embeddings.f16",
+      "QNN_VLM_LOAD": "${FIXTURE}",
+      "OMP_NUM_THREADS": "4",
+      "OMP_WAIT_POLICY": "PASSIVE",
+      "KMP_BLOCKTIME": "0",
+      "DFLASH_DRAFT_CTX": "${MODELS}/npu/vlm/ctx-deep-dynreg8-20k-seed42",
+      "DFLASH_DRAFT_PARAMS": "${MODELS}/npu/vlm/ctx-deep-dynreg8-20k-seed42/params.json",
+      "DFLASH_DRAFT_EMBD": "${MODELS}/npu/draft4b_embd_f16.bin",
+      "DFLASH_DDTREE": "23",
+      "DFLASH_DDK": "4",
+      "DFLASH_BLOCK": "8",
+      "DFLASH_NINJECT": "16",
+      "DFLASH_NHIDDEN": "5",
+      "DFLASH_MASKED_ROW_OUTPUT": "0",
+      "DFLASH_VLM_SUMMARY": "dynreg",
+      "DFLASH_VLM_REGISTERS": "${MODELS}/npu/vlm/deep-dynreg8-20k-seed42-registers-f32.bin",
+      "DFLASH_VLM_REGISTER_ROWS": "8",
+      "DFLASH_VLM_REGISTER_FOLD": "1",
+      "DFLASH_DRAFT_PREFILL_CTX": "${MODELS}/npu/vlm/ctx-deep-dynreg8-20k-seed42-inject256",
+      "DFLASH_DRAFT_PREFILL_PARAMS": "${MODELS}/npu/vlm/ctx-deep-dynreg8-20k-seed42-inject256/params.json"
+     },
+     "files": [
+      {
+       "path": "npu/vlm/target_embeddings.f16",
+       "bytes": 777912320
+      },
+      {
+       "path": "npu/vlm/Qwen3-VL-4B-Instruct-Q4_0.gguf"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-1024.jpg"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-00-293.png"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-docvqa-05-342.png"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-infographic-00-220.jpg"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.json"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.tokens.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.positions.i32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_embd.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_0.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_1.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.vlm_deepstack_2.f32"
+      },
+      {
+       "path": "npu/vlm/presets/doc2-chartqa-01-3101.png"
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_0.bin",
+       "bytes": 138375168
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_0_json.json",
+       "bytes": 44293
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_1.bin",
+       "bytes": 589307904
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_1_json.json",
+       "bytes": 108217
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_2.bin",
+       "bytes": 605757440
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_2_json.json",
+       "bytes": 106070
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_3.bin",
+       "bytes": 585269248
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_3_json.json",
+       "bytes": 106077
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_4.bin",
+       "bytes": 599007232
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_4_json.json",
+       "bytes": 106087
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_5.bin",
+       "bytes": 542195712
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/forward_5_json.json",
+       "bytes": 38325
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/io_contract.json",
+       "bytes": 8245
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/manifest.json",
+       "bytes": 525
+      },
+      {
+       "path": "npu/vlm/ctx_vlm_deep_a32_c4096_v2/params.json",
+       "bytes": 591
+      },
+      {
+       "path": "npu/vlm/ctx-deep-dynreg8-20k-seed42/forward_0.bin",
+       "bytes": 703836160
+      },
+      {
+       "path": "npu/vlm/ctx-deep-dynreg8-20k-seed42/forward_0_json.json",
+       "bytes": 77147
+      },
+      {
+       "path": "npu/vlm/ctx-deep-dynreg8-20k-seed42/io-contract.json",
+       "bytes": 17843
+      },
+      {
+       "path": "npu/vlm/ctx-deep-dynreg8-20k-seed42/params.json",
+       "bytes": 494
+      },
+      {
+       "path": "npu/vlm/ctx-deep-dynreg8-20k-seed42/runtime-contract.json",
+       "bytes": 672
+      },
+      {
+       "path": "npu/draft4b_embd_f16.bin"
+      },
+      {
+       "path": "npu/vlm/ctx-deep-dynreg8-20k-seed42-inject256/forward_0.bin",
+       "bytes": 35414016
+      },
+      {
+       "path": "npu/vlm/ctx-deep-dynreg8-20k-seed42-inject256/forward_0_json.json",
+       "bytes": 47633
+      },
+      {
+       "path": "npu/vlm/ctx-deep-dynreg8-20k-seed42-inject256/io-contract.json",
+       "bytes": 11102
+      },
+      {
+       "path": "npu/vlm/ctx-deep-dynreg8-20k-seed42-inject256/params.json",
+       "bytes": 536
+      },
+      {
+       "path": "npu/vlm/ctx-deep-dynreg8-20k-seed42-inject256/runtime-contract.json",
+       "bytes": 764
+      },
+      {
+       "path": "npu/vlm/deep-dynreg8-20k-seed42-registers-f32.bin",
+       "bytes": 81920
+      }
+     ],
+     "blurb": "The target writes 8 register rows at every verify call; the drafter reads them instead of the page."
+    }
+   ]
+  }
+ ]
+}

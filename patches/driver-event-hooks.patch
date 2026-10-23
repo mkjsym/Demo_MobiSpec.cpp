@@ -1,0 +1,196 @@
+diff --git a/examples/simple-qnn/simple-qnn.cpp b/examples/simple-qnn/simple-qnn.cpp
+index 9acb0366b26d23cef384afbf4aeb08d64df709b9..7bf151b41ca53e7501c85af2fbeeba79440aac63 100644
+--- a/examples/simple-qnn/simple-qnn.cpp
++++ b/examples/simple-qnn/simple-qnn.cpp
+@@ -6,2 +6,3 @@
+ #include "chat.h"
++#include "mobispec-events.h"
+ #include "QNN/llm_decode_runner.h"
+@@ -31,2 +32,3 @@ int main(int argc, char ** argv) {
+     common_init();
++    mobispec_events events(argv[0]);
+ 
+@@ -150,2 +152,3 @@ int main(int argc, char ** argv) {
+         printf("[QNN] Initialize time: %f ms\n", (t_init_end - t_init_start) / 1000.0); 
++        events.mark("loaded");
+ 
+@@ -231,2 +234,4 @@ int main(int argc, char ** argv) {
+         llama_token cur_token = llama_sampler_sample(smpl, ctx, -1);
++        events.step(vocab, &cur_token, 1);
++        events.mark("decode_start");
+ 
+@@ -296,2 +301,3 @@ int main(int argc, char ** argv) {
+             }
++            events.step(vocab, &cur_token, 1);
+ 
+@@ -346,2 +352,5 @@ int main(int argc, char ** argv) {
+         double decode_tps = (decode_time_ms > 0) ? (n_decoded_tokens / (decode_time_ms / 1000.0)) : 0;
++        events.done({{"tokens", (double) n_decoded_tokens}, {"steps", (double) (n_decoded_tokens - 1)},
++                     {"decode_us", (double) total_decode_us}, {"prefill_us", prefill_time_ms * 1000.0},
++                     {"setup_us", init_time_ms * 1000.0}, {"tps", decode_tps}, {"al", 1.0}});
+         
+diff --git a/examples/speculative-dflash-qnn-npu/speculative-dflash-qnn-npu.cpp b/examples/speculative-dflash-qnn-npu/speculative-dflash-qnn-npu.cpp
+index 393d286a6fb41839ea60ff7630dc7600b9344d0a..adeac7432c676692432fd10b1cbc97e7a14c92bc 100644
+--- a/examples/speculative-dflash-qnn-npu/speculative-dflash-qnn-npu.cpp
++++ b/examples/speculative-dflash-qnn-npu/speculative-dflash-qnn-npu.cpp
+@@ -30,2 +30,3 @@
+ #include "llama.h"
++#include "mobispec-events.h"
+ #include "QNN/llm_decode_runner.h"
+@@ -80,2 +81,3 @@ int main(int argc, char ** argv) {
+     llama_backend_init();
++    mobispec_events events(argv[0]);
+ 
+@@ -611,2 +613,3 @@ int main(int argc, char ** argv) {
+     // carries the BOS marker as text, hence add_special=false below.
++    events.mark("loaded");
+     const int64_t request_prepare_start = ggml_time_us();
+@@ -810,2 +813,3 @@ int main(int argc, char ** argv) {
+     output_timing.record(ggml_time_us(), out.size());
++    events.step(vocab, out.data(), out.size());
+     if (dynreg_on && !fold_now) {
+@@ -1090,2 +1094,3 @@ int main(int argc, char ** argv) {
+     // and which differs per technique. Same quantity the GPU driver reports, so the two compare.
++    events.mark("decode_start");
+     const auto t_dec_start = std::chrono::steady_clock::now();
+@@ -2033,2 +2038,3 @@ int main(int argc, char ** argv) {
+         output_timing.record(ggml_time_us(), out.size());
++        events.step(vocab, out.data() + out_before, out.size() - out_before);
+         if (stop) break;   // the reference driver stops on EOS; generating past it is off-distribution
+@@ -2047,2 +2053,8 @@ int main(int argc, char ** argv) {
+     if (!qnn_vlm_write_tokens(out) || !qnn_vlm_write_metrics(request_metrics, &vlm_prompt)) return 1;
++    events.done({{"tokens", (double) out.size()}, {"steps", (double) n_steps}, {"decode_us", (double) decode_us},
++                 {"draft_us", (double) us_draft}, {"verify_us", (double) us_verify}, {"prefill_us", (double) vlm_prefill_us},
++                 {"ttft_us", (double) output_timing.ttft_us()}, {"generation_us", (double) output_timing.generation_us()},
++                 {"setup_us", (double) (vlm_prompt.model_setup_us + draft_asset_setup_us)},
++                 {"register_init_us", (double) register_init_us}, {"draft_prefill_us", (double) draft_prefill_us},
++                 {"tps", dec_s > 0 ? out.size() / dec_s : 0.0}, {"al", n_steps ? (double) out.size() / n_steps : 0.0}});
+     LOG_INF("\n%s\n", common_detokenize(ctx, out, true).c_str());
+diff --git a/examples/speculative-dflash-qnn/vlm-run.cpp b/examples/speculative-dflash-qnn/vlm-run.cpp
+index bd794bf94633c039fcec9c8b0d6826069e568a8c..7a480acbb54a5453b83b2865706ef344e28edaec 100644
+--- a/examples/speculative-dflash-qnn/vlm-run.cpp
++++ b/examples/speculative-dflash-qnn/vlm-run.cpp
+@@ -4,2 +4,3 @@
+ #include "log.h"
++#include "mobispec-events.h"
+ #include <algorithm>
+@@ -28,2 +29,3 @@ int main(int argc, char ** argv) {
+     llama_backend_init();
++    mobispec_events events(argv[0]);
+     llama_qnn::LLMDecodeConfig config;
+@@ -50,2 +52,3 @@ int main(int argc, char ** argv) {
+     if (!runner.initialize()) { LOG_ERR("QNN initialization: %s\n", runner.get_error().c_str()); return 1; }
++    events.mark("loaded");
+     const int64_t request_prepare_start = ggml_time_us();
+@@ -101,2 +104,3 @@ int main(int argc, char ** argv) {
+     output_timing.exclude_model_setup(prompt.model_setup_us + prompt.model_teardown_us);
++    events.mark("decode_start");
+     const int64_t start = ggml_time_us();
+@@ -110,2 +114,3 @@ int main(int argc, char ** argv) {
+         output_timing.record(ggml_time_us(), output.size());
++        events.step(vocab, &next, 1);
+         if (llama_vocab_is_eog(vocab, next) || i + 1 == limit) break;
+@@ -135,2 +140,7 @@ int main(int argc, char ** argv) {
+             -1, -1, prompt.model_setup_us, prompt.model_teardown_us, &output_timing}, &prompt)) return 1;
++    events.done({{"tokens", (double) output.size()}, {"steps", (double) output.size() - 1}, {"decode_us", (double) decode_us},
++                 {"verify_us", (double) verify_us}, {"prefill_us", (double) prefill_us},
++                 {"ttft_us", (double) output_timing.ttft_us()}, {"generation_us", (double) output_timing.generation_us()},
++                 {"setup_us", (double) prompt.model_setup_us},
++                 {"tps", decode_us > 0 ? output.size() / (decode_us / 1e6) : 0.0}, {"al", 1.0}});
+     LOG_INF("[VLM AR] %zu tokens, %.3f ms after prefill\n%s\n", output.size(),
+diff --git a/examples/speculative-eagle-2/speculative-eagle-2.cpp b/examples/speculative-eagle-2/speculative-eagle-2.cpp
+index 1f57d86d2d8deda178590cff4079fe3d6aa017e4..88ce6f61569f6f1c971ba8c60ec30fbd7eca88e8 100644
+--- a/examples/speculative-eagle-2/speculative-eagle-2.cpp
++++ b/examples/speculative-eagle-2/speculative-eagle-2.cpp
+@@ -14,2 +14,3 @@
+ #include "llama.h"
++#include "mobispec-events.h"
+ 
+@@ -177,2 +178,3 @@ int main(int argc, char ** argv) {
+     common_init();
++    mobispec_events events(argv[0]);
+ 
+@@ -320,2 +322,3 @@ int main(int argc, char ** argv) {
+ 
++    events.mark("loaded");
+     const auto t_enc_start = ggml_time_us();
+@@ -344,2 +347,3 @@ int main(int argc, char ** argv) {
+         int n_gen = 0;
++        events.mark("decode_start");
+         const int64_t t_ar_start = ggml_time_us();
+@@ -351,2 +355,3 @@ int main(int argc, char ** argv) {
+             }
++            events.step(vocab_tgt, &id, 1);
+             LOG("%s", common_token_to_piece(ctx_tgt, id).c_str());
+@@ -360,2 +365,5 @@ int main(int argc, char ** argv) {
+         LOG_INF("decoded %d tokens in %.3f seconds, speed: %.3f t/s\n", n_gen, t_ar_s, t_ar_s > 0 ? n_gen / t_ar_s : 0.0);
++        events.done({{"tokens", (double) n_gen}, {"steps", (double) n_gen}, {"decode_us", t_ar_s * 1e6},
++                     {"prefill_us", (double) (t_ar_start - t_enc_start)},
++                     {"tps", t_ar_s > 0 ? n_gen / t_ar_s : 0.0}, {"al", 1.0}});
+         llama_batch_free(temp_batch_tgt);
+diff --git a/examples/speculative-eagle-mast/speculative-eagle-mast.cpp b/examples/speculative-eagle-mast/speculative-eagle-mast.cpp
+index ef2931bdf7726bddd073116b1e039f23fc2b9150..d3c2c3d240cedc29522912451e807fdd0926033a 100644
+--- a/examples/speculative-eagle-mast/speculative-eagle-mast.cpp
++++ b/examples/speculative-eagle-mast/speculative-eagle-mast.cpp
+@@ -9,2 +9,3 @@
+ #include "llama.h"
++#include "mobispec-events.h"
+ #include "../src/llama-context.h"
+@@ -1141,2 +1142,3 @@ int main(int argc, char ** argv) {
+     common_init();
++    mobispec_events events(argv[0]);
+ 
+@@ -1597,2 +1599,3 @@ int main(int argc, char ** argv) {
+ 
++    events.mark("loaded");
+     const auto t_enc_start = ggml_time_us(); // prompt encoding start (includes the FastV probe)
+@@ -2008,2 +2011,3 @@ int main(int argc, char ** argv) {
+ 
++    events.mark("decode_start");
+     const auto t_dec_start = ggml_time_us();
+@@ -2107,2 +2111,5 @@ int main(int argc, char ** argv) {
+     phase_snapshot pending_phase;
++    std::vector<llama_token> ev_ids;
++    std::vector<std::pair<int, llama_token>> ev_tree;
++    std::vector<int> ev_path;
+ 
+@@ -2504,2 +2511,4 @@ int main(int argc, char ** argv) {
+                     has_eos = true;
++                } else {
++                    ev_ids.push_back(token_id);
+                 }
+@@ -2543,3 +2552,3 @@ int main(int argc, char ** argv) {
+         // phase tree snapshot: emit
+-        if ((log_tree || calib_log) && pending_phase.valid) {
++        if ((log_tree || calib_log || events.tree) && pending_phase.valid) {
+             pending_phase.s_keep = s_keep;
+@@ -2554,2 +2563,7 @@ int main(int argc, char ** argv) {
+             }
++            if (events.tree) {
++                ev_tree.clear();
++                for (const auto & nd : pending_phase.nodes) ev_tree.push_back({nd.parent_idx, nd.token});
++                ev_path = pending_phase.accepted_batch_indices;
++            }
+             // [CALIB] one line per verified draft node (root d=0 excluded)
+@@ -2588,2 +2602,4 @@ int main(int argc, char ** argv) {
+         }
++        events.step(vocab_tgt, ev_ids.data(), ev_ids.size(), events.tree ? &ev_tree : nullptr, &ev_path);
++        ev_ids.clear();
+ 
+@@ -3489,3 +3505,3 @@ int main(int argc, char ** argv) {
+         // phase tree snapshot: capture
+-        if (log_tree || calib_log) {
++        if (log_tree || calib_log || events.tree) {
+             pending_phase = {};
+@@ -3649,2 +3665,11 @@ int main(int argc, char ** argv) {
+     LOG_INF("decoded %4d tokens in %8.3f seconds, speed: %8.3f t/s\n", n_predict, (t_dec_end - t_dec_start) / 1e6f, n_predict  / ((t_dec_end - t_dec_start) / 1e6f));
++    if (events.on()) {
++        const size_t n_al = acceptance_lengths.size();
++        const double al = n_al > 1 ? std::accumulate(acceptance_lengths.begin() + 1, acceptance_lengths.end(), 0.0) / (n_al - 1) : 0.0;
++        events.done({{"tokens", (double) n_predict}, {"steps", (double) n_al}, {"decode_us", (double) (t_dec_end - t_dec_start)},
++                     {"draft_us", std::accumulate(decoding_latencies.begin(), decoding_latencies.end(), 0.0) * 1000.0},
++                     {"verify_us", std::accumulate(verification_latencies.begin(), verification_latencies.end(), 0.0) * 1000.0},
++                     {"prefill_us", (double) (t_enc_end - t_enc_start)},
++                     {"tps", n_predict / ((t_dec_end - t_dec_start) / 1e6)}, {"al", al}});
++    }
+ 
