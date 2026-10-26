@@ -1,5 +1,6 @@
 package com.mobispec.demo.manifest
 
+import com.mobispec.demo.agent.AgentSpec
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -8,7 +9,7 @@ import java.io.File
 // device sweeps use, so a method here runs with exactly the arguments of its published number.
 
 enum class Backend { GPU, NPU }
-enum class Kind { LLM, VLM }
+enum class Kind { LLM, VLM, AGENT }
 
 // ar: the speed baseline (xAR denominator). ref: the same-graph target run the lossless check
 // compares against; when a scenario has no ref, its ar run serves as the reference.
@@ -63,6 +64,7 @@ data class Scenario(
     val losslessNote: String?,   // why the speed baseline's text may part from the SD text (shown next to the badge)
     val prompts: List<Prompt>,
     val methods: List<Method>,
+    val agent: AgentSpec? = null,   // AGENT: the phone agent's prompt and tasks instead of prompts
 ) {
     fun ar(target: String? = null): Method? =
         methods.firstOrNull { it.role == Role.AR && (target == null || it.target == target) }
@@ -84,7 +86,9 @@ data class DemoManifest(val version: Int, val generated: String, val scenarios: 
             return DemoManifest(
                 version = root.getInt("version"),
                 generated = root.optString("generated"),
-                scenarios = root.getJSONArray("scenarios").objects().map(::scenario),
+                // a kind this build does not know (a newer generator) is skipped, not a parse failure
+                scenarios = root.getJSONArray("scenarios").objects()
+                    .filter { o -> Kind.entries.any { it.name == o.getString("kind") } }.map(::scenario),
             )
         }
 
@@ -101,7 +105,8 @@ data class DemoManifest(val version: Int, val generated: String, val scenarios: 
             promptFormat = o.optStringOrNull("prompt_format"),
             allowCustomPrompt = o.optBoolean("custom_prompt", true),
             losslessNote = o.optString("lossless_note").ifEmpty { null },
-            prompts = o.getJSONArray("prompts").objects().map {
+            agent = o.optJSONObject("agent")?.let { AgentSpec.parse(it, AgentSpec.parseTasks(o)) },
+            prompts = (o.optJSONArray("prompts") ?: JSONArray()).objects().map {
                 Prompt(
                     id = it.getString("id"),
                     title = it.optString("title", it.getString("id")),

@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">MobiSpec Demo</string>
+    <string name="agent_service_description">Lets the MobiSpec demo agent read the screen and act on it while it runs a task.</string>
 </resources>

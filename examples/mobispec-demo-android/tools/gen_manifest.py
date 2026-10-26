@@ -44,6 +44,8 @@ VICUNA_FORMAT = ("A chat between a curious user and an artificial intelligence a
                  "helpful, detailed, and polite answers to the user's questions. USER: {prompt} ASSISTANT:")
 LLAMA3_FORMAT = "<|start_header_id|>user<|end_header_id|>\n\n{prompt}<|eot_id|><|start_header_id|>assistant<|end_header_id|>\n\n"
 
+OURS_C4096 = Path('/data/youngmin/demo-models/export-ours-c4096/ctx-deep-dynreg8-20k-seed42-c4096')   # the agent's Ours drafter (4,096 rows)
+
 BIN = {   # packaged names (tools/stage_jnilibs.py) of the drivers built in build-android-demo
     'mast': 'libms_mast.so', 'eagle2': 'libms_eagle2.so', 'dflash_npu': 'libms_dflash_npu.so',
     'vlm_run': 'libms_vlm_run.so', 'simple_qnn': 'libms_simple_qnn.so',
@@ -64,7 +66,8 @@ def files(*paths, local=None):
 def ctx_files(rel, local_dir=None):
     """A QNN context directory: every shard plus params.json, sized from the server copy if present."""
     if local_dir and Path(local_dir).is_dir():
-        names = sorted(f.name for f in Path(local_dir).iterdir() if f.is_file())
+        # export bookkeeping (io-/runtime-contract.json) is not read at run time and some phone copies lack it
+        names = sorted(f.name for f in Path(local_dir).iterdir() if f.is_file() and not f.name.endswith('-contract.json'))
         return [{'path': f'{rel}/{n}', 'bytes': (Path(local_dir) / n).stat().st_size} for n in names]
     return [{'path': f'{rel}/params.json'}]
 
@@ -278,6 +281,54 @@ def npu_vlm_scenario():
     }
 
 
+def npu_agent_scenario(vlm):
+    """The VLM methods as a resident agent backend: live screenshots (GPU encoder) instead of page fixtures, one request
+    per step (MOBISPEC_SERVE), and same-graph pairs, so AR and SD take the same actions. An agent prompt is ~1,500 text
+    rows, so every drafter needs its 4,096-row graph (Ours: exported for the demo 2026-10-26, same converted weights)."""
+    import agent_spec
+    M = '${MODELS}/npu/vlm'
+    # Q8_0 projector: the F16 one held ~1.3 GB of GPU and ~1 GB of host memory, and with Ours resident the phone fell to
+    # 677 MB available and the low-memory killer took the app with its driver (A2, 2026-10-26)
+    mmproj = 'npu/vlm/mmproj-Qwen3VL-4B-Q8_0.gguf'
+    methods = []
+    for m in vlm['methods']:
+        if m['id'] not in ('ar-deep', 'ours', 'ar', 'none', 'full'):
+            continue
+        args = [a for a in m['args']]
+        for flag in ('-f', '--image'):   # a request names the prompt file and the screenshot
+            i = args.index(flag)
+            del args[i:i + 2]
+        args[args.index('--image-max-tokens') + 1] = str(agent_spec.SCREEN['image_max_tokens'])
+        env = {k: v for k, v in m['env'].items() if k != 'QNN_VLM_LOAD'}
+        env['MOBISPEC_SERVE'] = '/dev/stdin'
+        fl = [f for f in m['files'] if not f['path'].startswith('npu/vlm/presets/')] + files(mmproj)
+        if m['id'] == 'none':   # the 4,096-row drafter and the inject-256 prefill graph, as Full has
+            env.update(DFLASH_DRAFT_CTX=f'{M}/ctx-none-20k-seed42-c4096', DFLASH_DRAFT_PARAMS=f'{M}/ctx-none-20k-seed42-c4096/params.json',
+                       DFLASH_DRAFT_PREFILL_CTX=f'{M}/ctx-none-20k-seed42-inject256',
+                       DFLASH_DRAFT_PREFILL_PARAMS=f'{M}/ctx-none-20k-seed42-inject256/params.json')
+            fl = [f for f in fl if 'ctx-none-20k-seed42/' not in f['path']] + \
+                ctx_files('npu/vlm/ctx-none-20k-seed42-c4096', VLM_ARTIFACTS / 'export' / 'ctx-none-20k-seed42-c4096') + \
+                ctx_files('npu/vlm/ctx-none-20k-seed42-inject256', VLM_ARTIFACTS / 'export' / 'ctx-none-20k-seed42-inject256')
+        if m['id'] == 'ours':
+            c = 'ctx-deep-dynreg8-20k-seed42-c4096'
+            env.update(DFLASH_DRAFT_CTX=f'{M}/{c}', DFLASH_DRAFT_PARAMS=f'{M}/{c}/params.json')
+            fl = [f for f in fl if 'ctx-deep-dynreg8-20k-seed42/' not in f['path']] + ctx_files(f'npu/vlm/{c}', OURS_C4096)
+        # the vision encoder on the GPU (OpenCL): the path the 2026-10-08 backend study ran with the N/N target and drafter
+        methods.append({**m, 'args': [*args, '--mmproj', '${MODELS}/' + mmproj, '--mmproj-offload'],
+                        'env': env, 'files': fl, 'reference': None})
+    return {
+        'id': 'npu-qwen3vl-agent', 'title': 'Qwen3-VL-4B phone agent on the NPU: AR vs Ours',
+        'subtitle': 'The agent reads the screen (screenshot + UI elements) and acts until the task is done; '
+                    'same-graph AR and SD take the same actions, so the task time is the comparison',
+        'backend': 'NPU', 'drafter': 'NPU', 'kind': 'AGENT', 'n_predict': agent_spec.SCREEN['n_predict'],
+        'headline': 'generation', 'prompt_format': None, 'custom_prompt': False, 'prompts': [],
+        'agent': {'template': agent_spec.TEMPLATE, 'menu': agent_spec.ACTION_MENU, 'guidelines': agent_spec.GUIDELINES,
+                  'screen': agent_spec.SCREEN, 'app_labels': agent_spec.APP_LABELS},
+        # Ours first among the SD methods: the screen preselects the first one and AR-deep vs Ours is the demo's pair
+        'tasks': agent_spec.TASKS, 'methods': sorted(methods, key=lambda m: m['id'] != 'ours'),
+    }
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument('--out', default='demo-manifest.json')
@@ -296,6 +347,7 @@ def main():
         npu_llm_scenario(),
         npu_vlm_scenario(),
     ]
+    scenarios.append(npu_agent_scenario(scenarios[-1]))
     refs = json.loads(REFERENCES.read_text())['references'] if REFERENCES.is_file() else {}
     if not refs:
         print(f'no {REFERENCES}: GPU and NPU LLM methods carry no reference numbers', file=sys.stderr)

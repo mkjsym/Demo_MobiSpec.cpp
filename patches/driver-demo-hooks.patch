@@ -30,74 +30,161 @@ index 9acb0366b26d23cef384afbf4aeb08d64df709b9..7bf151b41ca53e7501c85af2fbeeba79
 +                     {"setup_us", init_time_ms * 1000.0}, {"tps", decode_tps}, {"al", 1.0}});
          
 diff --git a/examples/speculative-dflash-qnn-npu/speculative-dflash-qnn-npu.cpp b/examples/speculative-dflash-qnn-npu/speculative-dflash-qnn-npu.cpp
-index 393d286a6fb41839ea60ff7630dc7600b9344d0a..adeac7432c676692432fd10b1cbc97e7a14c92bc 100644
+index 393d286a6fb41839ea60ff7630dc7600b9344d0a..be8d5692b352dc649ce72b72ea8aa3f8ff36ca93 100644
 --- a/examples/speculative-dflash-qnn-npu/speculative-dflash-qnn-npu.cpp
 +++ b/examples/speculative-dflash-qnn-npu/speculative-dflash-qnn-npu.cpp
-@@ -30,2 +30,3 @@
+@@ -30,2 +30,4 @@
  #include "llama.h"
 +#include "mobispec-events.h"
++#include "mobispec-serve.h"
  #include "QNN/llm_decode_runner.h"
-@@ -80,2 +81,3 @@ int main(int argc, char ** argv) {
+@@ -80,2 +82,3 @@ int main(int argc, char ** argv) {
      llama_backend_init();
 +    mobispec_events events(argv[0]);
  
-@@ -611,2 +613,3 @@ int main(int argc, char ** argv) {
+@@ -611,2 +614,15 @@ int main(int argc, char ** argv) {
      // carries the BOS marker as text, hence add_special=false below.
 +    events.mark("loaded");
++    // MOBISPEC_SERVE: requests come from the serve input instead, and everything below runs once per request.
++    // Only the stateless configurations (plain DDTree, with or without an image summary) may repeat.
++    mobispec_serve serve;
++    if (serve.on() && (dd_budget <= 0 || pc_budget || dar_budget || markov_gguf || tm_active || rbr_on ||
++            oracle.enabled() || mobile_on || sparse_mode || domino_on || frontier_packed || span_mode || source_mode ||
++            horizon_mode || dflash2_on || edge_mode || visual_mode || packed_views || coordinate_mode || register_mode ||
++            prefill_probe_mode)) {
++        LOG_ERR("MOBISPEC_SERVE supports plain DDTree runs only\n"); return 1;
++    }
++    if (serve.failed || (serve.on() && !serve.next(params))) return serve.failed ? 1 : 0;
++serve_request:
++    if (serve.on()) events.request(serve.id);
      const int64_t request_prepare_start = ggml_time_us();
-@@ -810,2 +813,3 @@ int main(int argc, char ** argv) {
+@@ -810,2 +826,3 @@ int main(int argc, char ** argv) {
      output_timing.record(ggml_time_us(), out.size());
 +    events.step(vocab, out.data(), out.size());
      if (dynreg_on && !fold_now) {
-@@ -1090,2 +1094,3 @@ int main(int argc, char ** argv) {
+@@ -1090,2 +1107,3 @@ int main(int argc, char ** argv) {
      // and which differs per technique. Same quantity the GPU driver reports, so the two compare.
 +    events.mark("decode_start");
      const auto t_dec_start = std::chrono::steady_clock::now();
-@@ -2033,2 +2038,3 @@ int main(int argc, char ** argv) {
+@@ -2033,2 +2051,3 @@ int main(int argc, char ** argv) {
          output_timing.record(ggml_time_us(), out.size());
 +        events.step(vocab, out.data() + out_before, out.size() - out_before);
          if (stop) break;   // the reference driver stops on EOS; generating past it is off-distribution
-@@ -2047,2 +2053,8 @@ int main(int argc, char ** argv) {
+@@ -2047,2 +2066,9 @@ int main(int argc, char ** argv) {
      if (!qnn_vlm_write_tokens(out) || !qnn_vlm_write_metrics(request_metrics, &vlm_prompt)) return 1;
 +    events.done({{"tokens", (double) out.size()}, {"steps", (double) n_steps}, {"decode_us", (double) decode_us},
 +                 {"draft_us", (double) us_draft}, {"verify_us", (double) us_verify}, {"prefill_us", (double) vlm_prefill_us},
 +                 {"ttft_us", (double) output_timing.ttft_us()}, {"generation_us", (double) output_timing.generation_us()},
 +                 {"setup_us", (double) (vlm_prompt.model_setup_us + draft_asset_setup_us)},
 +                 {"register_init_us", (double) register_init_us}, {"draft_prefill_us", (double) draft_prefill_us},
++                 {"prep_us", (double) vlm_prompt.preparation_us}, {"vision_us", (double) vlm_prompt.vision_encode_us},
 +                 {"tps", dec_s > 0 ? out.size() / dec_s : 0.0}, {"al", n_steps ? (double) out.size() / n_steps : 0.0}});
      LOG_INF("\n%s\n", common_detokenize(ctx, out, true).c_str());
+@@ -2073,2 +2099,11 @@ int main(int argc, char ** argv) {
+     llama_batch_free(batch);
++    if (serve.on()) {
++        qnn_runner.reset();
++        draft.reset();
++        if (draft_pre) draft_pre->reset();
++        ctx->spec_hiddens.clear();   // both accumulate across decodes; the next prompt's rows must start at 0
++        ctx->final_hiddens.clear();
++        if (serve.next(params)) goto serve_request;
++        if (serve.failed) return 1;
++    }
+     llama_backend_free();
+diff --git a/examples/speculative-dflash-qnn/vlm-prompt.cpp b/examples/speculative-dflash-qnn/vlm-prompt.cpp
+index acea2d13529bba21107ea7ebcd275959dc13c2d5..a2e588ab65a4868ec84bdcbcda93055af02c9108 100644
+--- a/examples/speculative-dflash-qnn/vlm-prompt.cpp
++++ b/examples/speculative-dflash-qnn/vlm-prompt.cpp
+@@ -155,3 +155,4 @@ bool qnn_vlm_prepare_prompt(const common_params & params, llama_context * ctx,
+         const int64_t embedding_setup_start = ggml_time_us();
+-        if (runner && !runner->configure_vlm(embeddings)) throw std::runtime_error(runner->get_error());
++        // A served driver (MOBISPEC_SERVE) comes back here per request; the table stays mapped from the first.
++        if (runner && !runner->vlm_configured() && !runner->configure_vlm(embeddings)) throw std::runtime_error(runner->get_error());
+         out.model_setup_us = ggml_time_us() - embedding_setup_start;
+@@ -220,2 +221,6 @@ bool qnn_vlm_prepare_prompt(const common_params & params, llama_context * ctx,
+             const int64_t vision_setup_start = ggml_time_us();
++            // A served driver (MOBISPEC_SERVE) keeps the encoder from its first request; it is left to process exit.
++            static llama_model * kept_metadata = nullptr;
++            static mtmd_context * kept_vision = nullptr;
++            const bool keep = std::getenv("MOBISPEC_SERVE") != nullptr;
+             auto mp = llama_model_default_params();
+@@ -225,5 +230,6 @@ bool qnn_vlm_prepare_prompt(const common_params & params, llama_context * ctx,
+             // vocab_only omits architecture dimensions needed by mtmd; no_alloc retains them.
+-            std::unique_ptr<llama_model, decltype(&llama_model_free)> metadata(
++            std::unique_ptr<llama_model, decltype(&llama_model_free)> metadata(kept_metadata ? kept_metadata :
+                 llama_model_load_from_file((params.qnn_tokenizer_path.empty() ? params.model.path :
+                                             params.qnn_tokenizer_path).c_str(), mp), llama_model_free);
++            kept_metadata = nullptr;
+             if (!metadata || llama_model_n_embd(metadata.get()) != 2560 ||
+@@ -239,6 +245,8 @@ bool qnn_vlm_prepare_prompt(const common_params & params, llama_context * ctx,
+             vp.image_max_tokens = params.image_max_tokens;
+-            std::unique_ptr<mtmd_context, decltype(&mtmd_free)> vision(
++            const bool fresh = kept_vision == nullptr;   // a kept encoder was warmed up by the request that made it
++            std::unique_ptr<mtmd_context, decltype(&mtmd_free)> vision(kept_vision ? kept_vision :
+                 mtmd_init_from_file(params.mmproj.path.c_str(), metadata.get(), vp), mtmd_free);
++            kept_vision = nullptr;
+             if (!vision || !mtmd_decode_use_mrope(vision.get())) throw std::runtime_error("incompatible Qwen3-VL projector");
+-            if (vp.use_gpu && params.warmup) {
++            if (vp.use_gpu && params.warmup && fresh) {
+                 const int64_t warmup_start = ggml_time_us();
+@@ -323,2 +331,6 @@ bool qnn_vlm_prepare_prompt(const common_params & params, llama_context * ctx,
+             const int64_t teardown_start = ggml_time_us();
++            if (keep) {
++                kept_vision = vision.release();
++                kept_metadata = metadata.release();
++            }
+             vision.reset();
 diff --git a/examples/speculative-dflash-qnn/vlm-run.cpp b/examples/speculative-dflash-qnn/vlm-run.cpp
-index bd794bf94633c039fcec9c8b0d6826069e568a8c..7a480acbb54a5453b83b2865706ef344e28edaec 100644
+index bd794bf94633c039fcec9c8b0d6826069e568a8c..27e382578de3989a9c95dd7aafc22e1aa70706cb 100644
 --- a/examples/speculative-dflash-qnn/vlm-run.cpp
 +++ b/examples/speculative-dflash-qnn/vlm-run.cpp
-@@ -4,2 +4,3 @@
+@@ -4,2 +4,4 @@
  #include "log.h"
 +#include "mobispec-events.h"
++#include "mobispec-serve.h"
  #include <algorithm>
-@@ -28,2 +29,3 @@ int main(int argc, char ** argv) {
+@@ -28,2 +30,3 @@ int main(int argc, char ** argv) {
      llama_backend_init();
 +    mobispec_events events(argv[0]);
      llama_qnn::LLMDecodeConfig config;
-@@ -50,2 +52,3 @@ int main(int argc, char ** argv) {
+@@ -50,2 +53,8 @@ int main(int argc, char ** argv) {
      if (!runner.initialize()) { LOG_ERR("QNN initialization: %s\n", runner.get_error().c_str()); return 1; }
 +    events.mark("loaded");
++    // MOBISPEC_SERVE: requests come from the serve input instead, and everything below runs once per request.
++    mobispec_serve serve;
++    if (serve.failed || (serve.on() && !serve.next(params))) return serve.failed ? 1 : 0;
++serve_request:
++    if (serve.on()) events.request(serve.id);
      const int64_t request_prepare_start = ggml_time_us();
-@@ -101,2 +104,3 @@ int main(int argc, char ** argv) {
+@@ -101,2 +110,3 @@ int main(int argc, char ** argv) {
      output_timing.exclude_model_setup(prompt.model_setup_us + prompt.model_teardown_us);
 +    events.mark("decode_start");
      const int64_t start = ggml_time_us();
-@@ -110,2 +114,3 @@ int main(int argc, char ** argv) {
+@@ -110,2 +120,3 @@ int main(int argc, char ** argv) {
          output_timing.record(ggml_time_us(), output.size());
 +        events.step(vocab, &next, 1);
          if (llama_vocab_is_eog(vocab, next) || i + 1 == limit) break;
-@@ -135,2 +140,7 @@ int main(int argc, char ** argv) {
+@@ -135,2 +146,8 @@ int main(int argc, char ** argv) {
              -1, -1, prompt.model_setup_us, prompt.model_teardown_us, &output_timing}, &prompt)) return 1;
 +    events.done({{"tokens", (double) output.size()}, {"steps", (double) output.size() - 1}, {"decode_us", (double) decode_us},
 +                 {"verify_us", (double) verify_us}, {"prefill_us", (double) prefill_us},
 +                 {"ttft_us", (double) output_timing.ttft_us()}, {"generation_us", (double) output_timing.generation_us()},
 +                 {"setup_us", (double) prompt.model_setup_us},
++                 {"prep_us", (double) prompt.preparation_us}, {"vision_us", (double) prompt.vision_encode_us},
 +                 {"tps", decode_us > 0 ? output.size() / (decode_us / 1e6) : 0.0}, {"al", 1.0}});
      LOG_INF("[VLM AR] %zu tokens, %.3f ms after prefill\n%s\n", output.size(),
+@@ -138,3 +155,9 @@ int main(int argc, char ** argv) {
+     llama_batch_free(batch);
+-    return qnn_vlm_write_tokens(output) ? 0 : 1;
++    if (!qnn_vlm_write_tokens(output)) return 1;
++    if (serve.on()) {
++        runner.reset();
++        if (serve.next(params)) goto serve_request;
++        return serve.failed ? 1 : 0;
++    }
++    return 0;
+ }
 diff --git a/examples/speculative-eagle-2/speculative-eagle-2.cpp b/examples/speculative-eagle-2/speculative-eagle-2.cpp
 index 1f57d86d2d8deda178590cff4079fe3d6aa017e4..88ce6f61569f6f1c971ba8c60ec30fbd7eca88e8 100644
 --- a/examples/speculative-eagle-2/speculative-eagle-2.cpp
@@ -194,3 +281,11 @@ index ef2931bdf7726bddd073116b1e039f23fc2b9150..d3c2c3d240cedc29522912451e807fdd
 +                     {"tps", n_predict / ((t_dec_end - t_dec_start) / 1e6)}, {"al", al}});
 +    }
  
+diff --git a/src/QNN/llm_decode_runner.h b/src/QNN/llm_decode_runner.h
+index cd931c0dbe337186fda3dd0d2e0a887a2f224cc5..0ccb596dd767ed65907c0fef56ee0552c2002673 100644
+--- a/src/QNN/llm_decode_runner.h
++++ b/src/QNN/llm_decode_runner.h
+@@ -90,2 +90,3 @@ class LLMDecodeRunner {
+   bool configure_vlm(const std::string & target_embeddings);
++  bool vlm_configured() const { return vlm_inputs_.enabled(); }
+   int qnn_decode_vlm(llama_context * ctx, llama_batch batch, const VLMPrompt & prompt, size_t offset);

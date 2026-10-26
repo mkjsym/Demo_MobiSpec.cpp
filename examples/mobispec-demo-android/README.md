@@ -8,6 +8,7 @@ S26에서 실험에 쓰는 C++ 드라이버를 그대로 실행해 AR과 SD를 �
 | GPU (Adreno 타깃 + Adreno 드래프트) | Vicuna-7B (예비: Llama-3-8B) | AR vs MAST |
 | NPU (Hexagon 타깃 + Hexagon 드래프트) | Qwen3-4B | AR vs DFlash / PCTree / DARTree |
 | NPU | Qwen3-VL-4B, 문서 프리셋 5장(연구의 대표 페이지) | AR vs None / Full / Ours |
+| NPU, 에이전트 | Qwen3-VL-4B가 폰을 조작해 태스크를 끝낸다 | AR-deep vs Ours (작업 시간) |
 
 ## 구조
 
@@ -99,6 +100,43 @@ NPU 점검은 부팅 82에서, GPU 점검은 정상 재부팅(부팅 83) 후 5�
   - **같은 부팅에서 GPU와 NPU 드래프트 교대 시험은 하지 않았다.**
     `examples/speculative-dflash-qnn-npu/README.md`에 이미 재부팅 재현 기록이 있다(블록을 크게 나눠도 재부팅).
     부팅 잠금을 유지하고, 백엔드를 바꿀 때는 재부팅한다.
+
+## NPU-VLM 에이전트 (`npu-qwen3vl-agent`)
+
+에이전트가 스크린샷과 화면 요소를 보고 한 스텝씩 행동해 태스크를 끝낸다. 같은 태스크를 AR-deep과 Ours로
+한 번씩 실행하고 작업 시간을 비교한다. 계획과 측정 기록은 `docs/impl-specs/android-demo-agentic-plan-20261026.md`.
+
+- **눈과 손**: 앱의 접근성 서비스(`agent/AgentService.kt`).
+  - 관측: 전면 창의 노드 트리와 그 창만의 스크린샷. HUD가 스크린샷에 들어가지 않는다.
+  - 행동: 제스처와 노드 동작.
+  - 요소와 스크린샷은 상태 표시줄과 내비게이션 바 사이 영역만 쓴다.
+- **모델**: 드라이버를 상주 모드(`MOBISPEC_SERVE=/dev/stdin`, `common/mobispec-serve.h`)로 한 번 띄우고, 스텝마다
+  stdin으로 요청 한 줄을 보낸다. 비전 인코더는 GPU(`--mmproj-offload`)이고 Q8_0 mmproj를 쓴다(F16은 Ours 상주 중
+  가용 메모리를 680 MB까지 낮춰 앱이 lmkd에 죽었다). 로드 직후 워밍업 요청을 한 번 보낸다.
+- **프롬프트와 태스크**: `tools/agent_spec.py`가 원본이고, 매니페스트로 앱에 들어간다. odbench(AndroidWorld 기반)의
+  M3A식 표현(스크린샷 + 요소 목록, index 액션)을 따른다. 같은 화면에서 앱과 호스트 프로브가 같은 프롬프트를 만드는지는
+  `AgentSpecTest`가 `agent-prompts.json`(`python3 tools/agent_spec.py`로 생성)으로 확인한다.
+- **같은 입력**: 두 실행이 화면 렌더링 차이만으로 갈라졌다(흐린 검색 바가 실행마다 수백 픽셀 다르다).
+  그래서 SD 실행도 화면을 직접 관측하고 조작하되, 모델 입력은 AR 실행의 같은 스텝 프롬프트와 스크린샷을 쓴다.
+  스텝마다 AR과 토큰이 같은지 기록한다.
+- **두 드라이버를 동시에 띄우지 않는다**: AR-deep과 Ours를 함께 상주시켰더니 폰이 재부팅됐다.
+
+```sh
+# 접근성 서비스 켜기 (끝나면 이전 값으로 되돌린다: 2026-10-26 기준 null, 0)
+adb shell settings put secure enabled_accessibility_services com.mobispec.demo/com.mobispec.demo.agent.AgentService
+adb shell settings put secure accessibility_enabled 1
+# 실행 (prompt = 태스크 id; AR 먼저)
+adb shell am start -n com.mobispec.demo/.MainActivity --es scenario npu-qwen3vl-agent --es prompt settings-model-name --es methods ar-deep,ours
+adb logcat -s MobiSpecDemo | grep AGENT_RESULT
+# 호스트 프로브 (odbench의 adb 관측과 행동, 측정용)
+~/anaconda3/envs/android_world/bin/python tools/agent_probe.py episode settings-model-name ar-deep
+~/anaconda3/envs/android_world/bin/python tools/agent_probe.py replay <episode 폴더> ours
+```
+
+- Ours의 4,096행 드래프터(`ctx-deep-dynreg8-20k-seed42-c4096`)는 데모용으로 export했다. 에이전트 프롬프트는 텍스트가
+  약 1,500행이라 연구의 1,024행 그래프에 들어가지 않는다. 폰 사본은 `/data/local/tmp/mobispec-demo/models/`에 있다.
+- 앱이 할 수 없는 복원(다크 모드 끄기, 계산기 기록 지우기)은 adb로 한다: `cmd uimode night no`,
+  `pm clear com.sec.android.app.popupcalculator`.
 
 ## 앱 화면
 

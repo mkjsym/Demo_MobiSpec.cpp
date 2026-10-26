@@ -6,12 +6,15 @@ import android.os.SystemClock
 import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.mobispec.demo.agent.AgentHub
+import com.mobispec.demo.agent.AgentTask
 import com.mobispec.demo.device.BootLock
 import com.mobispec.demo.device.DeviceMonitor
 import com.mobispec.demo.device.DeviceStatus
 import com.mobispec.demo.manifest.Backend
 import com.mobispec.demo.manifest.DemoManifest
 import com.mobispec.demo.manifest.Headline
+import com.mobispec.demo.manifest.Kind
 import com.mobispec.demo.manifest.Method
 import com.mobispec.demo.manifest.Placeholders
 import com.mobispec.demo.manifest.Prompt
@@ -119,6 +122,7 @@ sealed interface Screen {
     data object Race : Screen
     data object Board : Screen
     data class Log(val record: RunRecord) : Screen
+    data class AgentReplay(val scenarioId: String) : Screen
 }
 
 data class UiState(
@@ -193,6 +197,20 @@ class DemoViewModel(app: Application) : AndroidViewModel(app) {
     private fun modelsOf(sc: Scenario): File = sc.modelsRoot?.let { File(it) } ?: modelsDir
 
     fun modelsPath(sc: Scenario): String = modelsOf(sc).path
+
+    /** Starts an agent race (AR first); returns why it cannot start, or null. */
+    fun agentRace(sc: Scenario, task: AgentTask, methodIds: List<String>): String? {
+        val dev = _ui.value.device
+        if (dev != null && !bootLock.allows(dev.bootCount, sc.drafter)) {
+            return "This boot already ran ${bootLock.pinned(dev.bootCount)}-draft demos. Reboot before running this scenario."
+        }
+        if (!AgentHub.serviceEnabled) return "Turn on the MobiSpec agent under Settings > Accessibility first."
+        cancel()
+        if (!AgentHub.start(getApplication(), sc, task, methodIds, modelsOf(sc).path)) return "An agent run is already going."
+        if (dev != null) bootLock.pin(dev.bootCount, sc.drafter)
+        Log.i(TAG, "AGENT ${sc.id} ${task.id} $methodIds")
+        return null
+    }
 
     fun scenario(id: String): Scenario? = _ui.value.manifest?.scenarios?.firstOrNull { it.id == id }
     fun cachedAr(sc: Scenario, prompt: Prompt, target: String): RunRecord? =
@@ -324,6 +342,15 @@ class DemoViewModel(app: Application) : AndroidViewModel(app) {
         viewModelScope.launch {
             val manifest = withTimeoutOrNull(10_000) { ui.first { it.manifest != null || it.manifestError != null } }?.manifest
             val sc = manifest?.scenarios?.firstOrNull { it.id == scenarioId }
+            if (sc?.kind == Kind.AGENT) {   // prompt names the task; methods run in the given order
+                val task = sc.agent?.tasks?.firstOrNull { it.id == promptId }
+                when {
+                    task == null -> Log.e(TAG, "AUTORUN no task '$promptId' in ${sc.id}")
+                    open -> go(Screen.ScenarioScreen(sc.id))
+                    else -> agentRace(sc, task, methodIds)?.let { Log.e(TAG, "AUTORUN agent: $it") }
+                }
+                return@launch
+            }
             val prompt = sc?.prompts?.firstOrNull { it.id == promptId } ?: sc?.prompts?.firstOrNull()
             if (sc == null || prompt == null) {
                 Log.e(TAG, "AUTORUN no scenario '$scenarioId' / prompt '$promptId' (${_ui.value.manifestError ?: "manifest ok"})")

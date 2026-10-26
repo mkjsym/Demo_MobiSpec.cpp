@@ -66,6 +66,15 @@ struct mobispec_events {
         flush();
     }
 
+    // Start of one served request (mobispec-serve.h); every event up to its "done" belongs to it.
+    void request(int id) {
+        if (!f) {
+            return;
+        }
+        fprintf(f, "{\"ev\":\"request\",\"t_us\":%lld,\"id\":%d}\n", (long long) (now_us() - t0_us), id);
+        flush();
+    }
+
     // Tokens committed by one verify step (or one AR step). Text goes out as raw bytes in base64:
     // a multi-byte character can straddle two tokens, so the app reassembles UTF-8 itself.
     void step(const llama_vocab * vocab, const llama_token * ids, size_t n,

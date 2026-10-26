@@ -1,0 +1,287 @@
+{
+ "agent": {
+  "template": "You are an agent operating an Android phone. You are given the user's goal, the current screenshot, a list of the UI elements currently on screen, and what you have done so far. Choose exactly one action.\n\nAvailable actions:\n{menu}\n\nThe app currently in the foreground is: {foreground}\n(If that is already the app you need, do NOT open it again - work inside it.)\n\nThe current user goal is: {goal}\n\nWhat you have done so far:\n{history}\n\nUI elements on the current screen:\n{elements}\n\nGuidelines:\n{guidelines}\n\nReply with one JSON object and nothing else, the reason first and then the fields of one action above:\n{{\"reason\": \"<one short sentence>\", \"action_type\": \"<type>\", ...}}\n<__media__>",
+  "menu": "- status (finish): {\"action_type\": \"status\", \"goal_status\": \"complete\"}\n- status (give up): {\"action_type\": \"status\", \"goal_status\": \"infeasible\"}\n- answer (answer a question): {\"action_type\": \"answer\", \"text\": \"<answer>\"}\n- click (tap an element): {\"action_type\": \"click\", \"index\": <index>}\n- long_press (long press an element): {\"action_type\": \"long_press\", \"index\": <index>}\n- input_text (type into a field): {\"action_type\": \"input_text\", \"text\": \"<text>\", \"index\": <index>}\n- keyboard_enter (press enter): {\"action_type\": \"keyboard_enter\"}\n- navigate_home (go to the home screen): {\"action_type\": \"navigate_home\"}\n- navigate_back (go back): {\"action_type\": \"navigate_back\"}\n- scroll (scroll the screen): {\"action_type\": \"scroll\", \"direction\": \"<up|down|left|right>\"}\n- open_app (open an app): {\"action_type\": \"open_app\", \"app_name\": \"<name>\"}\n- wait (wait for the screen to update): {\"action_type\": \"wait\"}",
+  "guidelines": "- Prefer `open_app` over hunting through the launcher.\n- `input_text` already taps the field first, so do not tap it separately.\n- Only use an index that appears in the element list above.\n- If the goal is already satisfied, finish with the status action.\n- If an action did not change the screen, try a different approach rather than repeating it.\n- Never issue `open_app` for the app that is already in the foreground.\n- If the goal asks for information, give it with the `answer` action; do not finish with `status` instead.",
+  "screen": {
+   "scale": 0.33,
+   "crop": "system_bars",
+   "image_max_tokens": 256,
+   "n_predict": 96,
+   "skip_packages": [
+    "com.android.systemui",
+    "com.mobispec.demo"
+   ]
+  },
+  "app_labels": {
+   "com.sec.android.app.launcher": "홈 화면",
+   "com.android.settings": "설정",
+   "com.sec.android.app.popupcalculator": "계산기",
+   "com.sec.android.app.clockpackage": "시계",
+   "com.samsung.android.app.contacts": "연락처",
+   "com.samsung.android.calendar": "캘린더",
+   "com.sec.android.app.myfiles": "내 파일",
+   "com.sec.android.gallery3d": "갤러리",
+   "com.samsung.android.app.notes": "Samsung Notes",
+   "com.android.chrome": "Chrome"
+  }
+ },
+ "tasks": [
+  {
+   "id": "calc-multiply",
+   "title": "계산기로 123 x 45",
+   "max_steps": 15,
+   "goal": "계산기 앱에서 1, 2, 3, ×, 4, 5, = 버튼을 차례로 눌러 123 × 45를 계산하고 결과를 답해 줘.",
+   "setup": {
+    "stop": [
+     "com.sec.android.app.popupcalculator"
+    ],
+    "clear": [
+     "com.sec.android.app.popupcalculator"
+    ]
+   },
+   "verify": {
+    "answer_any": [
+     "5535"
+    ]
+   }
+  },
+  {
+   "id": "settings-android-version",
+   "title": "설정에서 Android 버전 찾기",
+   "max_steps": 10,
+   "goal": "설정 앱에서 '폰 정보'를 열고 '소프트웨어 정보'에서 Android 버전을 찾아 답해 줘.",
+   "setup": {
+    "stop": [
+     "com.android.settings"
+    ]
+   },
+   "verify": {
+    "answer_any": [
+     "16"
+    ]
+   }
+  },
+  {
+   "id": "settings-model-name",
+   "title": "설정에서 모델명 찾기",
+   "max_steps": 10,
+   "goal": "설정 앱에서 '폰 정보'를 열고 이 폰의 모델명을 찾아 답해 줘.",
+   "setup": {
+    "stop": [
+     "com.android.settings"
+    ]
+   },
+   "verify": {
+    "answer_any": [
+     "Galaxy S26",
+     "SM-S948N"
+    ]
+   }
+  },
+  {
+   "id": "settings-battery",
+   "title": "설정에서 배터리 잔량 확인",
+   "max_steps": 8,
+   "goal": "설정 앱에서 '배터리'를 열고 현재 배터리 잔량을 퍼센트로 답해 줘.",
+   "setup": {
+    "stop": [
+     "com.android.settings"
+    ]
+   },
+   "verify": {
+    "answer_battery": 2
+   }
+  },
+  {
+   "id": "settings-dark-mode",
+   "title": "다크 모드 켜기",
+   "max_steps": 10,
+   "goal": "설정 앱에서 '디스플레이'를 열고 '다크' 모드를 켜 줘.",
+   "setup": {
+    "stop": [
+     "com.android.settings"
+    ]
+   },
+   "verify": {
+    "setting": [
+     "secure",
+     "ui_night_mode",
+     "2"
+    ]
+   },
+   "restore": [
+    "cmd uimode night no"
+   ]
+  }
+ ],
+ "cases": [
+  {
+   "goal": "계산기 앱에서 1, 2, 3, ×, 4, 5, = 버튼을 차례로 눌러 123 × 45를 계산하고 결과를 답해 줘.",
+   "foreground": "com.sec.android.app.launcher",
+   "elements": [
+    {
+     "text": "설정",
+     "cls": "android.widget.TextView",
+     "pkg": "com.sec.android.app.launcher",
+     "clickable": true
+    },
+    {
+     "text": "Say \"hi\"\nnow",
+     "desc": "back\\slash",
+     "cls": "Button",
+     "checked": true,
+     "selected": true
+    },
+    {
+     "desc": "Search",
+     "cls": "android.widget.EditText",
+     "editable": true,
+     "scrollable": true
+    },
+    {
+     "text": "",
+     "desc": null,
+     "cls": null
+    }
+   ],
+   "history": [],
+   "prompt": "You are an agent operating an Android phone. You are given the user's goal, the current screenshot, a list of the UI elements currently on screen, and what you have done so far. Choose exactly one action.\n\nAvailable actions:\n- status (finish): {\"action_type\": \"status\", \"goal_status\": \"complete\"}\n- status (give up): {\"action_type\": \"status\", \"goal_status\": \"infeasible\"}\n- answer (answer a question): {\"action_type\": \"answer\", \"text\": \"<answer>\"}\n- click (tap an element): {\"action_type\": \"click\", \"index\": <index>}\n- long_press (long press an element): {\"action_type\": \"long_press\", \"index\": <index>}\n- input_text (type into a field): {\"action_type\": \"input_text\", \"text\": \"<text>\", \"index\": <index>}\n- keyboard_enter (press enter): {\"action_type\": \"keyboard_enter\"}\n- navigate_home (go to the home screen): {\"action_type\": \"navigate_home\"}\n- navigate_back (go back): {\"action_type\": \"navigate_back\"}\n- scroll (scroll the screen): {\"action_type\": \"scroll\", \"direction\": \"<up|down|left|right>\"}\n- open_app (open an app): {\"action_type\": \"open_app\", \"app_name\": \"<name>\"}\n- wait (wait for the screen to update): {\"action_type\": \"wait\"}\n\nThe app currently in the foreground is: 홈 화면 (com.sec.android.app.launcher)\n(If that is already the app you need, do NOT open it again - work inside it.)\n\nThe current user goal is: 계산기 앱에서 1, 2, 3, ×, 4, 5, = 버튼을 차례로 눌러 123 × 45를 계산하고 결과를 답해 줘.\n\nWhat you have done so far:\n(none yet)\n\nUI elements on the current screen:\nUI element 0: text=\"설정\", class=TextView, clickable\nUI element 1: text=\"Say \\\"hi\\\"\\nnow\", desc=\"back\\\\slash\", class=Button, checked|selected\nUI element 2: desc=\"Search\", class=EditText, editable|scrollable\nUI element 3: \n\nGuidelines:\n- Prefer `open_app` over hunting through the launcher.\n- `input_text` already taps the field first, so do not tap it separately.\n- Only use an index that appears in the element list above.\n- If the goal is already satisfied, finish with the status action.\n- If an action did not change the screen, try a different approach rather than repeating it.\n- Never issue `open_app` for the app that is already in the foreground.\n- If the goal asks for information, give it with the `answer` action; do not finish with `status` instead.\n\nReply with one JSON object and nothing else, the reason first and then the fields of one action above:\n{\"reason\": \"<one short sentence>\", \"action_type\": \"<type>\", ...}\n<__media__>"
+  },
+  {
+   "goal": "설정 앱에서 '디스플레이'를 열고 '다크' 모드를 켜 줘.",
+   "foreground": "com.android.settings",
+   "elements": [
+    {
+     "text": "설정",
+     "cls": "android.widget.TextView",
+     "pkg": "com.sec.android.app.launcher",
+     "clickable": true
+    },
+    {
+     "text": "Say \"hi\"\nnow",
+     "desc": "back\\slash",
+     "cls": "Button",
+     "checked": true,
+     "selected": true
+    }
+   ],
+   "history": [
+    "open_app(app_name=\"Settings\") - open it",
+    "click(index=1)  (this did NOT change the screen)"
+   ],
+   "prompt": "You are an agent operating an Android phone. You are given the user's goal, the current screenshot, a list of the UI elements currently on screen, and what you have done so far. Choose exactly one action.\n\nAvailable actions:\n- status (finish): {\"action_type\": \"status\", \"goal_status\": \"complete\"}\n- status (give up): {\"action_type\": \"status\", \"goal_status\": \"infeasible\"}\n- answer (answer a question): {\"action_type\": \"answer\", \"text\": \"<answer>\"}\n- click (tap an element): {\"action_type\": \"click\", \"index\": <index>}\n- long_press (long press an element): {\"action_type\": \"long_press\", \"index\": <index>}\n- input_text (type into a field): {\"action_type\": \"input_text\", \"text\": \"<text>\", \"index\": <index>}\n- keyboard_enter (press enter): {\"action_type\": \"keyboard_enter\"}\n- navigate_home (go to the home screen): {\"action_type\": \"navigate_home\"}\n- navigate_back (go back): {\"action_type\": \"navigate_back\"}\n- scroll (scroll the screen): {\"action_type\": \"scroll\", \"direction\": \"<up|down|left|right>\"}\n- open_app (open an app): {\"action_type\": \"open_app\", \"app_name\": \"<name>\"}\n- wait (wait for the screen to update): {\"action_type\": \"wait\"}\n\nThe app currently in the foreground is: 설정 (com.android.settings)\n(If that is already the app you need, do NOT open it again - work inside it.)\n\nThe current user goal is: 설정 앱에서 '디스플레이'를 열고 '다크' 모드를 켜 줘.\n\nWhat you have done so far:\nStep 1: open_app(app_name=\"Settings\") - open it\nStep 2: click(index=1)  (this did NOT change the screen)\n\nUI elements on the current screen:\nUI element 0: text=\"설정\", class=TextView, clickable\nUI element 1: text=\"Say \\\"hi\\\"\\nnow\", desc=\"back\\\\slash\", class=Button, checked|selected\n\nGuidelines:\n- Prefer `open_app` over hunting through the launcher.\n- `input_text` already taps the field first, so do not tap it separately.\n- Only use an index that appears in the element list above.\n- If the goal is already satisfied, finish with the status action.\n- If an action did not change the screen, try a different approach rather than repeating it.\n- Never issue `open_app` for the app that is already in the foreground.\n- If the goal asks for information, give it with the `answer` action; do not finish with `status` instead.\n\nReply with one JSON object and nothing else, the reason first and then the fields of one action above:\n{\"reason\": \"<one short sentence>\", \"action_type\": \"<type>\", ...}\n<__media__>"
+  }
+ ],
+ "replies": [
+  {
+   "text": "{\"reason\": \"Open the calculator.\", \"action_type\": \"open_app\", \"app_name\": \"Calculator\"}",
+   "reason": "Open the calculator.",
+   "action": {
+    "action_type": "open_app",
+    "app_name": "Calculator"
+   },
+   "summary": "open_app(app_name=\"Calculator\")"
+  },
+  {
+   "text": "Sure: {\"reason\": \"tap 5\", \"action_type\": \"click\", \"index\": 7} and more {\"x\": 1}",
+   "reason": "tap 5",
+   "action": {
+    "action_type": "click",
+    "index": 7
+   },
+   "summary": "click(index=7)"
+  },
+  {
+   "text": "{\"reason\": \"done\", \"action_type\": \"answer\", \"text\": 5535}",
+   "reason": "done",
+   "action": {
+    "action_type": "answer",
+    "text": 5535
+   },
+   "summary": "answer(text=5535)"
+  },
+  {
+   "text": "{\"reason\": \"r\", \"action_type\": \"input_text\", \"text\": \"\\uC548\\uB155\", \"index\": 2, \"clear_text\": true}",
+   "reason": "r",
+   "action": {
+    "action_type": "input_text",
+    "index": 2,
+    "text": "안녕"
+   },
+   "summary": "input_text(index=2, text=\"안녕\")"
+  },
+  {
+   "text": "{\"reason\": \"no index\", \"action_type\": \"click\"}",
+   "reason": "no index",
+   "action": null,
+   "summary": "no action (parse failure)"
+  },
+  {
+   "text": "{\"action_type\": \"click\", \"index\": \"3\"}",
+   "reason": "",
+   "action": null,
+   "summary": "no action (parse failure)"
+  },
+  {
+   "text": "{\"reason\": \"fly\", \"action_type\": \"fly\"}",
+   "reason": "fly",
+   "action": null,
+   "summary": "no action (parse failure)"
+  },
+  {
+   "text": "{\"reason\": \"x\" \"action_type\": \"wait\"} {\"action_type\": \"navigate_back\"}",
+   "reason": "",
+   "action": {
+    "action_type": "navigate_back"
+   },
+   "summary": "navigate_back"
+  },
+  {
+   "text": "no json here",
+   "reason": "",
+   "action": null,
+   "summary": "no action (parse failure)"
+  },
+  {
+   "text": "{\"reason\": \"nested\", \"extra\": {\"a\": 1}, \"action_type\": \"scroll\", \"direction\": \"down\"}",
+   "reason": "nested",
+   "action": {
+    "action_type": "scroll",
+    "direction": "down"
+   },
+   "summary": "scroll(direction=\"down\")"
+  },
+  {
+   "text": "{\"reason\": \"back\", \"action_type\": \"go_back\"}",
+   "reason": "back",
+   "action": {
+    "action_type": "navigate_back"
+   },
+   "summary": "navigate_back"
+  },
+  {
+   "text": "{\"reason\": \"home\", \"action_type\": \"Go to the home screen\"}",
+   "reason": "home",
+   "action": {
+    "action_type": "navigate_home"
+   },
+   "summary": "navigate_home"
+  },
+  {
+   "text": "{\"reason\": \"t\", \"action_type\": \"Tap\", \"index\": 2}",
+   "reason": "t",
+   "action": {
+    "action_type": "click",
+    "index": 2
+   },
+   "summary": "click(index=2)"
+  },
+  {
+   "text": "{\"reason\": \"x\", \"action_type\": 5}",
+   "reason": "x",
+   "action": null,
+   "summary": "no action (parse failure)"
+  }
+ ]
+}

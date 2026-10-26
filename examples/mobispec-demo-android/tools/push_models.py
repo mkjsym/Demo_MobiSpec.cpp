@@ -42,6 +42,11 @@ UNITS = {
     'npu/vlm/ctx_vlm_deep_a32_c4096_v2': (f'{VR}/ctx_vlm_deep_a32_c4096_v2', QA / 'ctx_vlm_deep_a32_c4096_v2'),
     'npu/vlm/ctx-none-20k-seed42': (f'{VR}/ctx-none-20k-seed42', QA / 'export/ctx-none-20k-seed42'),
     'npu/vlm/ctx-full-20k-seed42-c4096': (f'{VR}/ctx-full-20k-seed42-c4096', QA / 'export/ctx-full-20k-seed42-c4096'),
+    'npu/vlm/ctx-none-20k-seed42-c4096': (f'{VR}/ctx-none-20k-seed42-c4096', QA / 'export/ctx-none-20k-seed42-c4096'),
+    # exported for the agent demo (2026-10-26) into its own folders, on the server and on the phone
+    'npu/vlm/ctx-deep-dynreg8-20k-seed42-c4096': (f'{T}/mobispec-demo/models/ctx-deep-dynreg8-20k-seed42-c4096',
+                                                  Path('/data/youngmin/demo-models/export-ours-c4096/ctx-deep-dynreg8-20k-seed42-c4096')),
+    'npu/vlm/ctx-none-20k-seed42-inject256': (f'{VR}/ctx-none-20k-seed42-inject256', QA / 'export/ctx-none-20k-seed42-inject256'),
     'npu/vlm/ctx-deep-dynreg8-20k-seed42': (f'{VR}/ctx-deep-dynreg8-20k-seed42', QA / 'export/ctx-deep-dynreg8-20k-seed42'),
     'npu/vlm/ctx-full-20k-seed42-inject256': (f'{VR}/ctx-full-20k-seed42-inject256', QA / 'export/ctx-full-20k-seed42-inject256'),
     'npu/vlm/ctx-deep-dynreg8-20k-seed42-inject256': (f'{VR}/ctx-deep-dynreg8-20k-seed42-inject256', QA / 'export/ctx-deep-dynreg8-20k-seed42-inject256'),
@@ -50,6 +55,9 @@ UNITS = {
     'npu/vlm/target_embeddings.f16': (f'{T}/vlm-dflash-20260913/target_embeddings.f16',
                                       Path('/home/youngmin/dev/llm/specinfer_QNN/experiments/vlm-dflash-20260913/target_embeddings.f16')),
     'npu/vlm/Qwen3-VL-4B-Instruct-Q4_0.gguf': (f'{T}/lcpp/Qwen3-VL-4B-Instruct-Q4_0.gguf', None),
+    'npu/vlm/mmproj-Qwen3VL-4B-F16.gguf': (f'{T}/vlm-dflash-20260913/mmproj-Qwen3VL-4B-F16.gguf', None),
+    'npu/vlm/mmproj-Qwen3VL-4B-Q8_0.gguf': (f'{T}/mobispec-demo/models/mmproj-Qwen3VL-4B-Q8_0.gguf',
+                                           Path('/data/llamacpp_bench/models/mmproj/mmproj-Qwen3VL-4B-Q8_0.gguf')),
     # 6-8 month GGUFs (device cleanup group G4, kept): their directory varies, so they are searched for
     'gpu/vicuna_q4_0_output4.gguf': ('find:vicuna_q4_0_output4.gguf', None),
     'gpu/EAGLE_q4_0_output4.gguf': ('find:EAGLE_q4_0_output4.gguf', None),
@@ -96,7 +104,7 @@ def plan_units(manifest, scenarios):
         for meth in sc['methods']:
             for f in meth['files']:
                 files[f['path']] = f.get('bytes')
-        for p in sc['prompts']:
+        for p in sc.get('prompts', []):
             if p.get('image'):
                 image_names[Path(p['image']).name] = inputs[p['id']]['domain'] + '-' + Path(validation[p['id']]['image']).name
     units = {}
@@ -149,7 +157,7 @@ def direct_manifest(manifest, units):
             m['env'] = {k: sub(v) for k, v in m['env'].items()}
             for f in m['files']:
                 f['path'] = phone(f['path']).lstrip('/')
-        for pr in sc['prompts']:
+        for pr in sc.get('prompts', []):
             if pr.get('image'):
                 pr['image'] = phone(pr['image']).lstrip('/')
             if pr.get('fixture'):   # a file-name prefix (QNN_VLM_LOAD appends the suffixes), not a unit of its own
@@ -163,12 +171,16 @@ def main():
     ap.add_argument('--scenario', action='append', help='limit to these scenario ids')
     ap.add_argument('--apply', action='store_true')
     ap.add_argument('--direct', action='store_true', help='no copies: point the manifest at /data/local/tmp and push it')
+    ap.add_argument('--no-push', action='store_true', help='with --direct: write the direct manifest only')
     a = ap.parse_args()
     manifest = json.loads(Path(a.manifest).read_text())
     units = plan_units(manifest, a.scenario)
     if a.direct:
         out = Path(a.manifest).with_suffix('.direct.json')
         out.write_text(json.dumps(direct_manifest(manifest, units), indent=1, ensure_ascii=False) + '\n')
+        if a.no_push:
+            print(f'{out} written ({len(units)} units read in place)')
+            return
         sh(f'mkdir -p {APP_ROOT}')
         adb('push', str(out), f'{APP_ROOT}/demo-manifest.json')
         print(f'{out} pushed to {APP_ROOT}/demo-manifest.json ({len(units)} units read in place)')

@@ -70,6 +70,7 @@ fun DemoApp(vm: DemoViewModel) {
         vm.cancel()
         vm.go(when (screen) {
             is Screen.Log -> if (ui.race != null) Screen.Race else Screen.Home
+            is Screen.AgentReplay -> Screen.ScenarioScreen(screen.scenarioId)
             is Screen.Race, is Screen.Board -> ui.race?.scenarioId?.let { Screen.ScenarioScreen(it) }
                 ?: ui.board?.scenarioId?.let { Screen.ScenarioScreen(it) } ?: Screen.Home
             else -> Screen.Home
@@ -83,6 +84,7 @@ fun DemoApp(vm: DemoViewModel) {
                 Screen.Race -> "AR vs speculative"
                 Screen.Board -> "Method board"
                 is Screen.Log -> "Run log"
+                is Screen.AgentReplay -> "AR vs SD, side by side"
             }, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 18.sp)
         })
     }) { pad ->
@@ -93,6 +95,7 @@ fun DemoApp(vm: DemoViewModel) {
                 Screen.Race -> ui.race?.let { RaceScreen(it, vm) }
                 Screen.Board -> ui.board?.let { BoardScreen(it, ui, vm) }
                 is Screen.Log -> LogScreen(screen)
+                is Screen.AgentReplay -> AgentReplayScreen()
             }
         }
     }
@@ -113,13 +116,16 @@ fun HomeScreen(ui: UiState, vm: DemoViewModel) {
             }
         }
         val scenarios = ui.manifest?.scenarios ?: emptyList()
-        for (backend in Backend.entries) {
-            val group = scenarios.filter { it.backend == backend }
+        // the demo's three parts (user 2026-10-26); document QA stays reachable under the last heading
+        val groups = listOf(
+            "GPU - LLM 텍스트 생성 (Adreno 타깃과 드래프트)" to scenarios.filter { it.backend == Backend.GPU && it.kind == Kind.LLM },
+            "NPU - LLM 텍스트 생성 (Hexagon 타깃과 드래프트)" to scenarios.filter { it.backend == Backend.NPU && it.kind == Kind.LLM },
+            "NPU - VLM 에이전트 (폰을 조작하는 작업 시간)" to scenarios.filter { it.kind == Kind.AGENT },
+            "그 밖의 데모" to scenarios.filter { it.kind == Kind.VLM },
+        )
+        for ((heading, group) in groups) {
             if (group.isEmpty()) continue
-            item {
-                Text(if (backend == Backend.GPU) "Adreno GPU (target and draft)" else "Hexagon NPU (target and draft)",
-                    style = MaterialTheme.typography.titleMedium)
-            }
+            item { Text(heading, style = MaterialTheme.typography.titleMedium) }
             items(group, key = { it.id }) { sc ->
                 val missing = ui.missing[sc.id].orEmpty()
                 val blocked = ui.pinned != null && ui.pinned != sc.drafter
@@ -189,6 +195,7 @@ fun SettingsCard(ui: UiState, vm: DemoViewModel) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScenarioScreen(sc: Scenario, ui: UiState, vm: DemoViewModel) {
+    if (sc.kind == Kind.AGENT) return AgentScenarioScreen(sc, ui, vm)
     var promptId by rememberSaveable(sc.id) { mutableStateOf(sc.prompts.firstOrNull()?.id ?: "") }
     var custom by rememberSaveable(sc.id) { mutableStateOf("") }
     var methodId by rememberSaveable(sc.id) { mutableStateOf(sc.sdMethods.firstOrNull()?.id ?: "") }
