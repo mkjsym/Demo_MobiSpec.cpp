@@ -21,6 +21,7 @@ data class AgentTask(
     val goal: String,
     val maxSteps: Int,
     val stop: List<String>,       // packages whose task stack is reset before the episode
+    val start: String?,           // package on screen when the episode starts (null: the launcher)
     val verify: JSONObject,
     val restore: List<String>,    // shell commands (adb side) that put the start state back
 )
@@ -96,6 +97,7 @@ class AgentSpec(
                     val setup = it.optJSONObject("setup") ?: JSONObject()
                     AgentTask(it.getString("id"), it.optString("title", it.getString("id")), it.getString("goal"),
                         it.getInt("max_steps"), setup.optJSONArray("stop")?.strings() ?: emptyList(),
+                        setup.optString("start").ifEmpty { null },
                         it.getJSONObject("verify"), it.optJSONArray("restore")?.strings() ?: emptyList())
                 },
                 agent.optJSONObject("app_labels")?.let { l -> l.keys().asSequence().associateWith { l.getString(it) } } ?: emptyMap(),

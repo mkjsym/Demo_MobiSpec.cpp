@@ -78,7 +78,7 @@ class AgentEpisode(
     private val reference: EpisodeState? = null,
     private val onState: (EpisodeState) -> Unit,
 ) {
-    private var state = EpisodeState(task.id, method.id, method.title, onReference = reference != null)
+    private var state = EpisodeState(task.id, method.id, method.label, onReference = reference != null)
 
     private fun update(f: (EpisodeState) -> EpisodeState) {
         state = f(state)
@@ -97,8 +97,9 @@ class AgentEpisode(
             update { it.copy(phase = "warmup") }
             warmup(served, out)
 
-            // A fresh task stack for each app the task uses, then the launcher. Each step waits for its window: a HOME
-            // sent right after the relaunch raced it, and the next run started on the previous run's last page.
+            // A fresh task stack for each app the task uses, then the launcher, then the start app if any. Each step waits
+            // for its window: a HOME sent right after the relaunch raced it, and the next run started on the previous run's
+            // last page. Going through the launcher also makes the start app's wait real when the last run ended in it.
             for (pkg in task.stop) {
                 service.startApp(pkg)
                 untilForeground { it == pkg }
@@ -108,6 +109,10 @@ class AgentEpisode(
                 android.content.Intent(android.content.Intent.ACTION_MAIN).addCategory(android.content.Intent.CATEGORY_HOME), 0,
             )?.activityInfo?.packageName
             untilForeground { it == launcher }
+            if (task.start != null) {
+                service.startApp(task.start)
+                untilForeground { it == task.start }
+            }
 
             val history = mutableListOf<String>()
             var prevSig: String? = null

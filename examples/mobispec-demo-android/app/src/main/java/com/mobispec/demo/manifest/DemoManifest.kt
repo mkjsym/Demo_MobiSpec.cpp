@@ -37,6 +37,7 @@ data class Method(
     val files: List<FileReq>,
     val reference: Reference?,
     val blurb: String,
+    val label: String = title,   // the name races show ("MobiSpec.cpp"); pickers and logs keep the title
 )
 
 data class Prompt(
@@ -75,6 +76,14 @@ data class Scenario(
             ?: methods.firstOrNull { it.role == Role.AR && it.target == target }
 
     val sdMethods: List<Method> get() = methods.filter { it.role == Role.SD }
+
+    /** The model's name, the title's first word ("Vicuna-7B on the GPU: ..."). */
+    val model: String get() = title.substringBefore(" ")
+
+    /** Most tokens one target call has yielded: 7 for MAST at --n-depth 5, 8 for the NPU block drafter (S26 records). */
+    val stepCap: Int get() = sdMethods.mapNotNull { m ->
+        m.args.indexOf("--n-depth").takeIf { it >= 0 }?.let { m.args.getOrNull(it + 1)?.toIntOrNull()?.plus(2) }
+    }.maxOrNull() ?: 8
 }
 
 data class DemoManifest(val version: Int, val generated: String, val scenarios: List<Scenario>) {
@@ -142,6 +151,7 @@ data class DemoManifest(val version: Int, val generated: String, val scenarios: 
                     Reference(it.optDoubleOrNull("tps"), it.optDoubleOrNull("al"), it.optDoubleOrNull("xar"), it.optString("note"))
                 },
                 blurb = o.optString("blurb"),
+                label = o.optString("label").ifEmpty { o.getString("title") },
             )
         }
     }

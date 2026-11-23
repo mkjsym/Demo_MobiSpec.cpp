@@ -169,8 +169,10 @@ def valid_action(d):
 # Stock S26 apps only; nothing touches user data. Goals are Korean like the phone's UI (with an English goal the agent
 # scrolled past '폰 정보' looking for 'About phone') and name the menu to open, as a user instructing a phone would:
 # without that the 4B agent found '폰 정보' in some runs and not in others (A1, 2026-10-26). setup: packages to force-stop / to clear (app state the
-# task changes), verify: how the device state or the answer is checked, restore: commands that put the start state
-# back (run before the episode too, so a task never starts already done).
+# task changes; start: the app on screen at step 1 instead of the launcher), verify: how the device state or the answer is
+# checked, restore: commands that put the start state back (run before the episode too, so a task never starts already
+# done). The model-name demo task starts in Settings (user 2026-10-28): from the launcher the first step hung on the home
+# widgets' text ('좋은 하루' vs '좋은 오후' turned open_app into a tap on the Google search widget).
 TASKS = [
     {'id': 'calc-multiply', 'title': '계산기로 123 x 45', 'max_steps': 15,
      'goal': '계산기 앱에서 1, 2, 3, ×, 4, 5, = 버튼을 차례로 눌러 123 × 45를 계산하고 결과를 답해 줘.',
@@ -181,7 +183,7 @@ TASKS = [
      'setup': {'stop': ['com.android.settings']}, 'verify': {'answer_any': ['16']}},
     {'id': 'settings-model-name', 'title': '설정에서 모델명 찾기', 'max_steps': 10,
      'goal': "설정 앱에서 '폰 정보'를 열고 이 폰의 모델명을 찾아 답해 줘.",
-     'setup': {'stop': ['com.android.settings']}, 'verify': {'answer_any': ['Galaxy S26', 'SM-S948N']}},
+     'setup': {'stop': ['com.android.settings'], 'start': 'com.android.settings'}, 'verify': {'answer_any': ['Galaxy S26', 'SM-S948N']}},
     {'id': 'settings-battery', 'title': '설정에서 배터리 잔량 확인', 'max_steps': 8,
      'goal': "설정 앱에서 '배터리'를 열고 현재 배터리 잔량을 퍼센트로 답해 줘.",
      'setup': {'stop': ['com.android.settings']}, 'verify': {'answer_battery': 2}},

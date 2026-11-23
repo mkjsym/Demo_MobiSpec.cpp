@@ -88,11 +88,12 @@ data class RaceState(
     val running: Boolean = false,
     val lossless: Lossless? = null,
     val note: String? = null,
+    val countdown: Int? = null,   // 3, 2, 1 before a replay, so recordings of the two runs can be lined up
 ) {
-    /** Final ratio once both runs are recorded; while SD decodes, its running rate against AR's. */
+    /** Final ratio once SD is done; while it decodes (or replays), its running rate against AR's. */
     val xar: Double? get() {
         val a = ar.record?.headlineTps(headline) ?: ar.shownTps ?: return null
-        val s = sd.record?.headlineTps(headline) ?: sd.shownTps ?: return null
+        val s = (if (sd.phase == Phase.DONE) sd.record?.headlineTps(headline) else null) ?: sd.shownTps ?: return null
         return if (a > 0) s / a else null
     }
 }
@@ -114,6 +115,8 @@ data class Settings(
     val minGapSec: Int = 30,           // minimum idle time between back-to-back board runs
     val align: Align = Align.DECODE,
     val tree: Boolean = true,          // ask the drivers for per-step trees (MAST only so far)
+    val stepChart: Boolean = true,     // the tokens-per-call bars in a run view; off leaves the text more room
+    val stats: Boolean = false,        // the tokens, time, tokens-per-call and progress rows in a run view (off since 2026-10-29)
 )
 
 sealed interface Screen {
@@ -123,6 +126,8 @@ sealed interface Screen {
     data object Board : Screen
     data class Log(val record: RunRecord) : Screen
     data class AgentReplay(val scenarioId: String) : Screen
+    data class Focus(val role: Role?) : Screen   // one run full screen; null follows the run that is going
+    data class AgentFocus(val scenarioId: String, val index: Int) : Screen   // one agent run full screen, replayed
 }
 
 data class UiState(
@@ -226,8 +231,8 @@ class DemoViewModel(app: Application) : AndroidViewModel(app) {
         val ar = sc.ar(sd.target) ?: return
         val align = _ui.value.settings.align
         _ui.update {
-            it.copy(screen = Screen.Race, race = RaceState(sc.id, prompt.id, sd.id, PaneState(ar.title, Role.AR, sc.headline),
-                PaneState(sd.title, Role.SD, sc.headline), align, sc.headline, running = true))
+            it.copy(screen = Screen.Race, race = RaceState(sc.id, prompt.id, sd.id, PaneState(ar.label, Role.AR, sc.headline),
+                PaneState(sd.label, Role.SD, sc.headline), align, sc.headline, running = true))
         }
         job = viewModelScope.launch {
             try {
@@ -257,24 +262,69 @@ class DemoViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** Opens the latest recorded AR and SD runs of this prompt as a finished race, to replay or show full screen. */
+    fun recordedRace(sc: Scenario, prompt: Prompt, sd: Method): Boolean {
+        val arRec = cachedAr(sc, prompt, sd.target) ?: return false
+        val sdRec = store.latest(sc.id, prompt.id, sd.id) ?: return false
+        cancel()
+        _ui.update {
+            it.copy(screen = Screen.Race, race = RaceState(sc.id, prompt.id, sd.id, paneFrom(arRec, sc.headline), paneFrom(sdRec, sc.headline),
+                it.settings.align, sc.headline))
+        }
+        finishRace(sc, sd, prompt, arRec, sdRec)
+        return true
+    }
+
+    fun cachedSd(sc: Scenario, prompt: Prompt, sd: Method): RunRecord? = store.latest(sc.id, prompt.id, sd.id)
+
     /** Replays both recorded runs of the current race on one clock. */
     fun replayRace() {
         val r = _ui.value.race ?: return
         val arRec = r.ar.record ?: return
         val sdRec = r.sd.record ?: return
         cancel()
-        updateRace { it.copy(running = true) }
+        updateRace { it.copy(running = true, ar = idle(arRec, r.headline), sd = idle(sdRec, r.headline)) }
         job = viewModelScope.launch {
             try {
+                countdown()
                 coroutineScope {
                     launch { replay(arRec, r.align, r.headline) { p -> updateRace { it.copy(ar = p) } } }
                     launch { replay(sdRec, r.align, r.headline) { p -> updateRace { it.copy(sd = p) } } }
                 }
             } finally {
-                updateRace { it.copy(running = false) }
+                updateRace { it.copy(running = false, countdown = null) }
             }
         }
     }
+
+    /** Replays one recorded run of the current race from its start, after a countdown. */
+    fun replayOne(role: Role) {
+        val r = _ui.value.race ?: return
+        val rec = (if (role == Role.SD) r.sd else r.ar).record ?: return
+        fun put(p: PaneState) = updateRace { if (role == Role.SD) it.copy(sd = p) else it.copy(ar = p) }
+        cancel()
+        updateRace { it.copy(running = true) }
+        put(idle(rec, r.headline))
+        job = viewModelScope.launch {
+            try {
+                countdown()
+                replay(rec, r.align, r.headline) { p -> put(p) }
+            } finally {
+                updateRace { it.copy(running = false, countdown = null) }
+            }
+        }
+    }
+
+    private suspend fun countdown() {
+        for (n in 3 downTo 1) {
+            updateRace { it.copy(countdown = n) }
+            delay(1000)
+        }
+        updateRace { it.copy(countdown = null) }
+    }
+
+    private fun idle(rec: RunRecord, headline: Headline) =
+        paneFrom(rec, headline).copy(steps = emptyList(), done = emptyMap(), phase = Phase.IDLE)
 
     private fun finishRace(sc: Scenario, sd: Method, prompt: Prompt, arRec: RunRecord, sdRec: RunRecord?) {
         if (sdRec == null) return
@@ -338,14 +388,27 @@ class DemoViewModel(app: Application) : AndroidViewModel(app) {
      * Runs started by an intent (see MainActivity) so device checks need no taps. Every finished run
      * logs one RESULT line under the MobiSpecDemo tag; `race` plays AR against the first SD method id.
      */
-    fun autorun(scenarioId: String, promptId: String?, methodIds: List<String>, race: Boolean, open: Boolean = false) {
+    fun autorun(
+        scenarioId: String, promptId: String?, methodIds: List<String>, race: Boolean, open: Boolean = false,
+        recorded: Boolean = false, focus: String? = null, replay: Boolean = false,
+    ) {
         viewModelScope.launch {
             val manifest = withTimeoutOrNull(10_000) { ui.first { it.manifest != null || it.manifestError != null } }?.manifest
             val sc = manifest?.scenarios?.firstOrNull { it.id == scenarioId }
             if (sc?.kind == Kind.AGENT) {   // prompt names the task; methods run in the given order
                 val task = sc.agent?.tasks?.firstOrNull { it.id == promptId }
+                val sd = sc.methods.firstOrNull { it.id in methodIds && it.role == Role.SD } ?: sc.sdMethods.firstOrNull()
                 when {
                     task == null -> Log.e(TAG, "AUTORUN no task '$promptId' in ${sc.id}")
+                    // recorded: the latest recorded race, shown (focus ar|sd: that run full screen, both: side by side)
+                    recorded -> if (sd == null || !AgentHub.loadRecorded(getApplication(), sc, task, sd.id)) {
+                        Log.e(TAG, "AUTORUN no recorded agent race for ${task.id}")
+                    } else go(when (focus) {
+                        "ar" -> Screen.AgentFocus(sc.id, 0)
+                        "sd" -> Screen.AgentFocus(sc.id, 1)
+                        "both" -> Screen.AgentReplay(sc.id)
+                        else -> Screen.ScenarioScreen(sc.id)
+                    })
                     open -> go(Screen.ScenarioScreen(sc.id))
                     else -> agentRace(sc, task, methodIds)?.let { Log.e(TAG, "AUTORUN agent: $it") }
                 }
@@ -360,9 +423,17 @@ class DemoViewModel(app: Application) : AndroidViewModel(app) {
                 go(Screen.ScenarioScreen(sc.id))
                 return@launch
             }
-            Log.i(TAG, "AUTORUN ${sc.id} ${prompt.id} $methodIds race=$race")
+            Log.i(TAG, "AUTORUN ${sc.id} ${prompt.id} $methodIds race=$race recorded=$recorded focus=$focus replay=$replay")
             val sd = sc.methods.firstOrNull { it.id in methodIds && it.role == Role.SD }
-            if (race && sd != null) race(sc, prompt, sd, replayAr = false) else board(sc, prompt, methodIds.ifEmpty { null })
+            when {
+                recorded && sd != null -> if (!recordedRace(sc, prompt, sd)) { Log.e(TAG, "AUTORUN no recorded AR and ${sd.id} for ${prompt.id}"); return@launch }
+                race && sd != null -> race(sc, prompt, sd, replayAr = false)
+                else -> { board(sc, prompt, methodIds.ifEmpty { null }); return@launch }
+            }
+            // focus=ar|sd|auto shows one run full screen; replay=true replays the recorded race (focus ar|sd: that run only)
+            val role = when (focus) { "ar" -> Role.AR; "sd" -> Role.SD; else -> null }
+            if (focus != null) go(Screen.Focus(role))
+            if (recorded && replay) if (role != null) replayOne(role) else replayRace()
         }
     }
 
@@ -389,7 +460,7 @@ class DemoViewModel(app: Application) : AndroidViewModel(app) {
         onMark: (name: String, firstStep: Boolean) -> Unit = { _, _ -> },
         publish: (PaneState) -> Unit,
     ): RunRecord? {
-        var pane = PaneState(m.title, m.role, sc.headline)
+        var pane = PaneState(m.label, m.role, sc.headline)
         fun emit(p: PaneState) { pane = p; publish(p) }
 
         // guards: boot-session drafter pin, battery, thermal forecast
@@ -508,7 +579,7 @@ class DemoViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     private fun paneFrom(rec: RunRecord, headline: Headline) = PaneState(
-        title = rec.methodTitle, role = rec.role, headline = headline, phase = Phase.DONE, steps = rec.steps, marks = rec.marks,
+        title = scenario(rec.scenarioId)?.methods?.firstOrNull { it.id == rec.methodId }?.label ?: rec.methodTitle, role = rec.role, headline = headline, phase = Phase.DONE, steps = rec.steps, marks = rec.marks,
         done = rec.done, replay = true, recordedAtMs = rec.startedAtMs, record = rec,
     )
 }

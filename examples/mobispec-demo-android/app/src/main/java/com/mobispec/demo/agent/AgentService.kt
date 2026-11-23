@@ -4,7 +4,6 @@ import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.GestureDescription
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.Color
 import android.graphics.PixelFormat
 import android.graphics.Path
 import android.graphics.Rect
@@ -17,7 +16,6 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.view.accessibility.AccessibilityWindowInfo
-import android.widget.TextView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -50,7 +48,7 @@ class AgentService : AccessibilityService() {
 
     @Volatile private var lastChange = 0L
     private val main = Handler(Looper.getMainLooper())
-    private var hud: TextView? = null
+    private var hud: HudView? = null
 
     override fun onServiceConnected() {
         instance = this
@@ -72,12 +70,8 @@ class AgentService : AccessibilityService() {
      * The progress strip over the app the agent drives. It is an accessibility overlay that takes no touches, so the
      * agent's gestures go through it, and window screenshots of the app never contain it.
      */
-    fun showHud(text: CharSequence) = main.post {
-        val view = hud ?: TextView(this).apply {
-            setBackgroundColor(Color.argb(210, 0, 0, 0))
-            setTextColor(Color.WHITE)
-            textSize = 12f
-            setPadding(24, 12, 24, 12)
+    fun showHud(h: Hud) = main.post {
+        val view = hud ?: HudView(this).apply {
             val lp = WindowManager.LayoutParams(
                 WindowManager.LayoutParams.MATCH_PARENT, WindowManager.LayoutParams.WRAP_CONTENT,
                 WindowManager.LayoutParams.TYPE_ACCESSIBILITY_OVERLAY,
@@ -88,7 +82,7 @@ class AgentService : AccessibilityService() {
             getSystemService(WindowManager::class.java).addView(this, lp)
             hud = this
         }
-        view.text = text
+        view.show(h)
     }
 
     fun hideHud() = main.post {

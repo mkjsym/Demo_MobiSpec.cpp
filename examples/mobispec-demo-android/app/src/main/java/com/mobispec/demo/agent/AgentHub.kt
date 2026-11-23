@@ -5,6 +5,7 @@ import android.content.Intent
 import android.os.SystemClock
 import android.util.Log
 import com.mobispec.demo.MainActivity
+import com.mobispec.demo.manifest.Role
 import com.mobispec.demo.manifest.Scenario
 import com.mobispec.demo.run.BinaryRunner
 import kotlinx.coroutines.CoroutineScope
@@ -16,6 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.io.File
 
 /** A task run with each method in turn (AR first, so the SD run can show where AR was at the same moment). */
 data class AgentRace(
@@ -45,19 +47,31 @@ object AgentHub {
         val methods = methodIds.mapNotNull { id -> scenario.methods.firstOrNull { it.id == id } }
         if (methods.isEmpty()) return false
         val app = context.applicationContext
-        _race.value = AgentRace(scenario.id, task, methods.map { EpisodeState(task.id, it.id, it.title) }, true)
+        _race.value = AgentRace(scenario.id, task, methods.map { EpisodeState(task.id, it.id, it.label) }, true)
+        val sd = methods.map { it.role == Role.SD }
         job = scope.launch {
             val runner = BinaryRunner(app)
+            var current = 0
+            val clock = launch {   // the task clock runs between state changes too
+                while (true) {
+                    delay(100)
+                    val r = _race.value ?: continue
+                    val e = r.episodes[current]
+                    if (e.startedAt > 0 && e.episodeMs == null) service.showHud(hud(r, current, sd[current]))
+                }
+            }
             for ((i, m) in methods.withIndex()) {
+                current = i
                 if (i > 0) delay(5_000)   // let the target app settle and the previous driver release the NPU
                 // later methods read the first (AR) run's screens, so every run decodes exactly the same inputs
                 val reference = if (i > 0) _race.value?.episodes?.first()?.takeIf { it.inputs.isNotEmpty() } else null
                 AgentEpisode(app, service, runner, spec, task, m, modelsRoot, reference) { st ->
                     val r = _race.value ?: return@AgentEpisode
                     _race.value = r.copy(episodes = r.episodes.toMutableList().also { it[i] = st })
-                    service.showHud(hudText(_race.value!!, i))
+                    service.showHud(hud(_race.value!!, i, sd[i]))
                 }.run()
             }
+            clock.cancel()
             _race.value = _race.value?.copy(running = false)
             _race.value?.let(::logResults)   // here, not in the activity's view model, which may be recreated mid-race
             service.hideHud()
@@ -74,38 +88,87 @@ object AgentHub {
             .put("same", e.steps.count { it.same == true }).put("record", e.record?.path ?: JSONObject.NULL))
     }
 
+    /**
+     * The latest recorded race of this task with `sdId` (an SD episode and the AR episode it read its inputs from), as a
+     * finished race, so it can be shown and replayed without running. False when there is none or a race is running.
+     */
+    fun loadRecorded(context: Context, scenario: Scenario, task: AgentTask, sdId: String): Boolean {
+        if (job?.isActive == true) return false
+        val dir = File(context.filesDir, "agent/${task.id}")
+        val sd = dir.listFiles { f -> f.isDirectory && f.name.startsWith("$sdId-") }.orEmpty()
+            .sortedByDescending { it.name.substringAfterLast('-').toLongOrNull() ?: 0L }
+            .map { File(it, "episode.json") }
+            .firstOrNull { f -> f.isFile && runCatching { JSONObject(f.readText()).optString("reference").let { r -> r.isNotEmpty() && File(r).isFile } }.getOrDefault(false) }
+            ?: return false
+        val ar = File(JSONObject(sd.readText()).getString("reference"))
+        val eps = listOf(ar, sd).map { f -> runCatching { episode(f, scenario) }.getOrNull() ?: return false }
+        _race.value = AgentRace(scenario.id, task, eps, false)
+        return true
+    }
+
+    private fun episode(f: File, scenario: Scenario): EpisodeState {
+        val o = JSONObject(f.readText())
+        val method = o.getString("method")
+        val steps = o.getJSONArray("steps").let { a ->
+            (0 until a.length()).map { i ->
+                val s = a.getJSONObject(i)
+                val d = s.optJSONObject("done") ?: JSONObject()
+                val action = s.optJSONObject("action")?.let { x -> AgentAction(x.keys().asSequence().associateWith { k -> x.get(k) }) }
+                AgentStep(
+                    n = s.getInt("step"), action = AgentSpec.summarise(action), reason = s.optString("reason"),
+                    tokens = s.optJSONArray("ids")?.length() ?: 0, visionMs = d.optDouble("vision_us", 0.0) / 1e3,
+                    prefillMs = d.optDouble("ttft_us", 0.0) / 1e3, decodeMs = d.optDouble("decode_us", 0.0) / 1e3, al = d.optDouble("al", 1.0),
+                    observeMs = s.optLong("observe_ms"), actMs = s.optLong("act_ms"), endMs = s.optLong("end_ms"),
+                    error = s.optString("act_error").takeIf { it.isNotEmpty() && it != "null" },
+                    same = if (s.isNull("same_as_reference")) null else s.optBoolean("same_as_reference"),
+                )
+            }
+        }
+        val ok = o.optBoolean("success")
+        return EpisodeState(
+            taskId = o.getString("task"), methodId = method,
+            methodTitle = scenario.methods.firstOrNull { it.id == method }?.label ?: method,
+            phase = if (o.optString("verdict") == "failed") "failed" else "done", stepNo = steps.size, startedAt = 1,
+            steps = steps, success = ok, answer = o.optString("answer").takeIf { it.isNotEmpty() && it != "null" },
+            error = o.optString("error").takeIf { it.isNotEmpty() }, episodeMs = if (o.has("episode_ms")) o.getLong("episode_ms") else null,
+            record = f, onReference = steps.any { it.same != null },
+        )
+    }
+
     fun stop() {
         job?.cancel()
         AgentService.instance?.hideHud()
         _race.value = _race.value?.copy(running = false)
     }
 
-    private val PHASES = mapOf("loading" to "모델 불러오는 중", "warmup" to "준비 중", "observe" to "화면 읽는 중",
-        "think" to "화면 이해 중", "decode" to "생성 중", "act" to "동작 중", "verify" to "확인 중", "done" to "완료", "failed" to "실패")
+    private val PHASES = mapOf("loading" to "loading model", "warmup" to "warming up", "observe" to "reading the screen",
+        "think" to "encoding the screen", "decode" to "generating", "act" to "acting", "verify" to "checking", "done" to "done",
+        "failed" to "failed")
 
-    private fun hudText(r: AgentRace, i: Int): String {
+    private fun hud(r: AgentRace, i: Int, sd: Boolean): Hud {
         val e = r.episodes[i]
         val now = SystemClock.elapsedRealtime()
         val elapsed = if (e.startedAt > 0) (e.episodeMs ?: (now - e.startedAt)) / 1000.0 else 0.0
-        val lines = mutableListOf(
-            "${e.methodTitle} - ${r.task.title}",
-            "스텝 ${e.stepNo}/${r.task.maxSteps} - ${PHASES[e.phase] ?: e.phase} - " + "%.1f s".format(elapsed),
-        )
-        e.steps.lastOrNull()?.let { s ->
-            // only numbers go through format: an action's text may hold a '%' ("79%" once crashed the episode)
-            lines += "직전: ${s.action}  " + "(%d tok, decode %.1f tok/s, AL %.2f)".format(
-                s.tokens, if (s.decodeMs > 0) s.tokens / (s.decodeMs / 1000) else 0.0, s.al) +
-                when (s.same) { true -> " - AR과 같은 토큰"; false -> " - AR과 다름"; null -> "" }
+        val tokens = e.steps.sumOf { it.tokens }
+        val decodeSec = e.steps.sumOf { it.decodeMs } / 1000
+        val calls = e.steps.sumOf { s -> if (s.al > 0) s.tokens / s.al else 0.0 }
+        val detail = when {
+            e.phase == "decode" -> e.live.replace('\n', ' ').takeLast(140)
+            else -> e.steps.lastOrNull()?.let { "last: ${it.action}" } ?: ""
         }
-        if (e.phase == "decode") lines += e.live.takeLast(140)
-        // where the earlier (AR) run was at this moment, from its recorded step ends
-        if (i > 0 && e.startedAt > 0) {
+        // where the earlier (AR) run was at this moment, from its recorded step ends; the first run gets a line too,
+        // so both bands have one height
+        val note = if (i > 0 && e.startedAt > 0) {
             val ar = r.episodes[0]
-            val at = (now - e.startedAt)
-            val arStep = ar.steps.count { it.endMs <= at }
-            lines += "${ar.methodTitle}는 이 시각에 스텝 $arStep/${ar.steps.size} 완료" +
-                (ar.episodeMs?.let { " (전체 " + "%.1f s".format(it / 1000.0) + ")" } ?: "")
-        }
-        return lines.joinToString("\n")
+            val at = now - e.startedAt
+            "${ar.methodTitle} at this moment: step ${ar.steps.count { it.endMs <= at }}/${ar.steps.size}" +
+                (ar.episodeMs?.let { " (task " + "%.1f s".format(it / 1000.0) + ")" } ?: "")
+        } else if (i == 0 && r.episodes.size > 1) "baseline run; ${r.episodes[1].methodTitle.substringBefore(" (")} follows on the same screens" else null
+        return Hud(
+            method = e.methodTitle.substringBefore(" ("), sd = sd, task = r.task.title, elapsedSec = elapsed,
+            step = e.stepNo, maxSteps = r.task.maxSteps, phase = PHASES[e.phase] ?: e.phase,
+            tps = if (decodeSec > 0) tokens / decodeSec else null, al = if (calls > 0) tokens / calls else null,
+            detail = detail, note = note,
+        )
     }
 }

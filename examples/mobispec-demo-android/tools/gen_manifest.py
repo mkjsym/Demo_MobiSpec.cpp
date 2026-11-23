@@ -72,6 +72,9 @@ def ctx_files(rel, local_dir=None):
     return [{'path': f'{rel}/params.json'}]
 
 
+# races show the SD side (MAST, PCTree, Ours) under the framework's name (user 2026-10-27); pickers and logs keep the title
+FRAMEWORK = 'MobiSpec.cpp'
+
 # P0 2026-10-23 (Vicuna, Spec-Bench coding Q1): MAST and AR agree for 44 tokens, then 'def' vs '#'
 GPU_LOSSLESS_NOTE = ("The GPU has no AR run on the verify kernels: verification scores a batch of tree tokens, AR one token "
                      "at a time, and OpenCL rounds the two differently, so at a near-tie the greedy texts can part. "
@@ -91,7 +94,7 @@ def gpu_scenario(sid, title, subtitle, target, draft, fmt, ctx, extra, cast, blu
             {'id': 'ar', 'title': 'AR', 'role': 'ar', 'target': 'gpu', 'bin': BIN['eagle2'],
              'args': [*model, '--spec-draft-n-max', '0'], 'files': fl,
              'blurb': 'Target-only greedy decoding through the EAGLE-2 driver (same tokenizer and sampler).'},
-            {'id': 'mast', 'title': 'MAST', 'role': 'sd', 'target': 'gpu', 'bin': BIN['mast'],
+            {'id': 'mast', 'title': 'MAST', 'label': FRAMEWORK, 'role': 'sd', 'target': 'gpu', 'bin': BIN['mast'],
              'args': [*model, '--mode', 'eagle2', '--spec-draft-n-max', '100', '--spec-draft-n-min', '1',
                       '--top-k', '5', '--n-depth', '5', '--rerank-k', '7', '--cast', *cast], 'files': fl,
              'blurb': blurb},
@@ -114,16 +117,19 @@ def npu_llm_scenario():
               '--params', f'{M}/ctx_ar32/params.json', '--log-level', '1', '-n', '${N}', '-c', '1024']
     common_files = [*ctx_files('npu/llm/ctx_ar32'), *files('npu/llm/Qwen3-4B-q4_0-outq4.gguf', 'npu/draft4b_embd_f16.bin')]
 
-    def sd(mid, title, ctx, extra_env, blurb, markov=False):
+    def sd(mid, title, ctx, extra_env, blurb, markov=False, label=None):
         env = {'DFLASH_CHAT': '1', 'DFLASH_DRAFT_EMBD': '${MODELS}/npu/draft4b_embd_f16.bin',
                'DFLASH_DRAFT_CTX': f'{M}/{ctx}', 'DFLASH_DRAFT_PARAMS': f'{M}/{ctx}/params.json', **extra_env}
         fl = [*common_files, *ctx_files(f'npu/llm/{ctx}')]
         if markov:
             env['DFLASH_MARKOV_GGUF'] = f'{M}/Qwen3-4B-DSpark-b7-q4_0-emb.gguf'
             fl += files('npu/llm/Qwen3-4B-DSpark-b7-q4_0-emb.gguf')
-        return {'id': mid, 'title': title, 'role': 'sd', 'target': 'a32', 'bin': BIN['dflash_npu'],
-                'args': [*target, '--temp', '0.0', '-f', '${PROMPT_FILE}'], 'env': env, 'files': fl,
-                'blurb': blurb}
+        m = {'id': mid, 'title': title, 'role': 'sd', 'target': 'a32', 'bin': BIN['dflash_npu'],
+             'args': [*target, '--temp', '0.0', '-f', '${PROMPT_FILE}'], 'env': env, 'files': fl,
+             'blurb': blurb}
+        if label:
+            m['label'] = label
+        return m
 
     return {
         'id': 'npu-qwen3-4b', 'title': 'Qwen3-4B on the NPU: AR vs DFlash / PCTree / DARTree',
@@ -142,7 +148,7 @@ def npu_llm_scenario():
                'Block drafter proposes 7 tokens in one NPU call; chain verification.'),
             sd('pctree', 'PCTree', 'ctx_dspark4b_w4ne',
                {'DFLASH_PCTREE': '23', 'DFLASH_PCK': '4', 'DFLASH_PCTOPN': '256', 'DFLASH_PCEXACT': '0'},
-               'Per-parent re-scored tree from one block call, budget 23.', markov=True),
+               'Per-parent re-scored tree from one block call, budget 23.', markov=True, label=FRAMEWORK),
             sd('dartree', 'DARTree', 'ctx_dspark4b_w4ne', {'DFLASH_DARTREE': '31', 'DFLASH_DARW': '8'},
                'Global (parent, candidate) layer selection, budget 31.', markov=True),
         ],
@@ -234,11 +240,14 @@ def npu_vlm_scenario():
     def tfiles(target):
         return ctx_files(f'npu/vlm/{targets[target]}', VLM_ARTIFACTS / targets[target])
 
-    def ar(mid, title, target, ref, blurb):
-        return {'id': mid, 'title': title, 'role': 'ar', 'target': target, 'bin': BIN['vlm_run'], 'affinity': '3f',
-                'args': argv(target), 'env': env0, 'files': [*shared, *tfiles(target)], 'reference': ref, 'blurb': blurb}
+    def ar(mid, title, target, ref, blurb, label=None):
+        m = {'id': mid, 'title': title, 'role': 'ar', 'target': target, 'bin': BIN['vlm_run'], 'affinity': '3f',
+             'args': argv(target), 'env': env0, 'files': [*shared, *tfiles(target)], 'reference': ref, 'blurb': blurb}
+        if label:
+            m['label'] = label
+        return m
 
-    def sd(mid, title, target, arm, ctx, summary, ddtree, extra, ref, blurb, prefill_ctx=None):
+    def sd(mid, title, target, arm, ctx, summary, ddtree, extra, ref, blurb, prefill_ctx=None, label=None):
         env = {**env0, 'DFLASH_DRAFT_CTX': f'{M}/{ctx}', 'DFLASH_DRAFT_PARAMS': f'{M}/{ctx}/params.json',
                'DFLASH_DRAFT_EMBD': '${MODELS}/npu/draft4b_embd_f16.bin', 'DFLASH_DDTREE': str(ddtree), 'DFLASH_DDK': '4',
                'DFLASH_BLOCK': '8', 'DFLASH_NINJECT': '16', 'DFLASH_NHIDDEN': '5', 'DFLASH_MASKED_ROW_OUTPUT': '0',
@@ -251,8 +260,11 @@ def npu_vlm_scenario():
         if 'DFLASH_VLM_REGISTERS' in extra:
             fl += files(f'npu/vlm/{arm}-registers-f32.bin',
                         local={f'npu/vlm/{arm}-registers-f32.bin': str(VLM_ARTIFACTS / 'export' / arm / 'registers-f32.bin')})
-        return {'id': mid, 'title': title, 'role': 'sd', 'target': target, 'bin': BIN['dflash_npu'], 'affinity': '3f',
-                'args': argv(target), 'env': env, 'files': fl, 'reference': ref, 'blurb': blurb}
+        m = {'id': mid, 'title': title, 'role': 'sd', 'target': target, 'bin': BIN['dflash_npu'], 'affinity': '3f',
+             'args': argv(target), 'env': env, 'files': fl, 'reference': ref, 'blurb': blurb}
+        if label:
+            m['label'] = label
+        return m
 
     return {
         'id': 'npu-qwen3vl-4b', 'title': 'Qwen3-VL-4B document QA on the NPU: AR vs None / Full / Ours',
@@ -262,7 +274,7 @@ def npu_vlm_scenario():
         'methods': [
             ar('ar', 'AR', 'a32', ref('ar', 'ar'), 'Target-only decoding on the 32-row graph (reference of None and Full).'),
             ar('ar-deep', 'AR (deep target)', 'deep32', ref('ar-deep', 'ar-deep'),
-               'Target-only decoding on the deep-register target graph (reference of Ours).'),
+               'Target-only decoding on the deep-register target graph (reference of Ours).', label='AR'),
             sd('none', 'None', 'a32', 'none-20k-seed42', 'ctx-none-20k-seed42', 'none', 31, {},
                ref('none', 'ar'),
                'Drafter sees the text only (no image rows): a short drafter prefill, lower acceptance.'),
@@ -276,7 +288,7 @@ def npu_vlm_scenario():
                 'DFLASH_VLM_REGISTER_FOLD': '1'},
                ref('ours', 'ar-deep'),
                'The target writes 8 register rows at every verify call; the drafter reads them instead of the page.',
-               prefill_ctx='ctx-deep-dynreg8-20k-seed42-inject256'),
+               prefill_ctx='ctx-deep-dynreg8-20k-seed42-inject256', label=FRAMEWORK),
         ],
     }
 

@@ -2,12 +2,16 @@ package com.mobispec.demo.ui
 
 import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -29,6 +34,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -70,21 +76,32 @@ fun DemoApp(vm: DemoViewModel) {
         vm.cancel()
         vm.go(when (screen) {
             is Screen.Log -> if (ui.race != null) Screen.Race else Screen.Home
+            is Screen.Focus -> Screen.Race
+            is Screen.AgentFocus -> Screen.ScenarioScreen(screen.scenarioId)
             is Screen.AgentReplay -> Screen.ScenarioScreen(screen.scenarioId)
             is Screen.Race, is Screen.Board -> ui.race?.scenarioId?.let { Screen.ScenarioScreen(it) }
                 ?: ui.board?.scenarioId?.let { Screen.ScenarioScreen(it) } ?: Screen.Home
             else -> Screen.Home
         })
     }
+    if (screen is Screen.Focus) {   // full screen, no app bar: what a recording shows
+        ui.race?.let { FocusScreen(it, screen.role, vm.scenario(it.scenarioId), ui.settings.stepChart, ui.settings.stats, vm) }
+        return
+    }
+    if (screen is Screen.AgentFocus) {
+        AgentFocusScreen(screen, vm)
+        return
+    }
     Scaffold(topBar = {
         TopAppBar(title = {
             Text(when (screen) {
                 Screen.Home -> "MobiSpec on-device SD"
                 is Screen.ScenarioScreen -> vm.scenario(screen.id)?.title ?: ""
-                Screen.Race -> "AR vs speculative"
+                Screen.Race -> ui.race?.let { r -> "${vm.scenario(r.scenarioId)?.model ?: ""}: ${shortTitle(r.ar.title)} vs ${shortTitle(r.sd.title)}" } ?: ""
                 Screen.Board -> "Method board"
                 is Screen.Log -> "Run log"
                 is Screen.AgentReplay -> "AR vs SD, side by side"
+                is Screen.Focus, is Screen.AgentFocus -> ""
             }, maxLines = 1, overflow = TextOverflow.Ellipsis, fontSize = 18.sp)
         })
     }) { pad ->
@@ -92,10 +109,11 @@ fun DemoApp(vm: DemoViewModel) {
             when (screen) {
                 Screen.Home -> HomeScreen(ui, vm)
                 is Screen.ScenarioScreen -> vm.scenario(screen.id)?.let { ScenarioScreen(it, ui, vm) }
-                Screen.Race -> ui.race?.let { RaceScreen(it, vm) }
+                Screen.Race -> ui.race?.let { RaceScreen(it, ui.settings.stepChart, ui.settings.stats, vm) }
                 Screen.Board -> ui.board?.let { BoardScreen(it, ui, vm) }
                 is Screen.Log -> LogScreen(screen)
-                is Screen.AgentReplay -> AgentReplayScreen()
+                is Screen.AgentReplay -> AgentReplayScreen(vm)
+                is Screen.Focus, is Screen.AgentFocus -> {}
             }
         }
     }
@@ -188,6 +206,14 @@ fun SettingsCard(ui: UiState, vm: DemoViewModel) {
                 Text("Record draft trees (MAST)", fontSize = 12.sp, modifier = Modifier.weight(1f))
                 Switch(checked = s.tree, onCheckedChange = { vm.settings(s.copy(tree = it)) })
             }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Show tokens per target call (off: more room for the text)", fontSize = 12.sp, modifier = Modifier.weight(1f))
+                Switch(checked = s.stepChart, onCheckedChange = { vm.settings(s.copy(stepChart = it)) })
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Show tokens, time, tokens per call and progress", fontSize = 12.sp, modifier = Modifier.weight(1f))
+                Switch(checked = s.stats, onCheckedChange = { vm.settings(s.copy(stats = it)) })
+            }
         }
     }
 }
@@ -239,6 +265,12 @@ fun ScenarioScreen(sc: Scenario, ui: UiState, vm: DemoViewModel) {
         OutlinedButton(onClick = { vm.race(sc, prompt!!, method!!, replayAr = true) }, enabled = ready && cached != null, modifier = Modifier.fillMaxWidth()) {
             Text(if (cached != null) "Race: ${method?.title} live vs AR recorded ${time(cached.startedAtMs)}" else "Race vs recorded AR (run AR once first)")
         }
+        val cachedSd = remember(prompt?.id, method?.id, ui.race?.running, ui.board?.running) {
+            if (prompt != null && method != null) vm.cachedSd(sc, prompt, method) else null
+        }
+        OutlinedButton(onClick = { vm.recordedRace(sc, prompt!!, method!!) }, enabled = cached != null && cachedSd != null, modifier = Modifier.fillMaxWidth()) {
+            Text(if (cached != null && cachedSd != null) "Recorded race (replay, full screen): ${time(cachedSd.startedAtMs)}" else "Recorded race (run both once first)")
+        }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = { vm.board(sc, prompt!!) }, enabled = prompt != null && missing.isEmpty() && !locked, modifier = Modifier.weight(1f)) {
                 Text("All methods")
@@ -282,43 +314,48 @@ fun PageImage(f: File) {
     else Text("(page image not on device: ${f.name})", fontSize = 11.sp)
 }
 
+/** AR and SD side by side, each in the full-screen layout scaled to its column (the slides' "option 1"). */
 @Composable
-fun RaceScreen(r: RaceState, vm: DemoViewModel) {
-    Column(Modifier.fillMaxSize().padding(8.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        RunPane(r.ar, Modifier.fillMaxWidth().weight(1f))
-        RunPane(r.sd, Modifier.fillMaxWidth().weight(1f))
-        // the two text panes are the demo; everything below stays compact (per-pane numbers are in the panes)
-        Row(Modifier.fillMaxWidth().height(96.dp)) {
-            TokenTimeChart(listOf(r.ar to Palette.ar, r.sd to Palette.sd), r.align, Modifier.weight(1f).padding(end = 6.dp))
-            if (r.sd.steps.lastOrNull()?.tree != null) TreeView(r.sd.steps.lastOrNull(), Modifier.width(120.dp))
-        }
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            Stat("x AR", fmt(r.xar), Palette.sd)
-            Stat("e2e x", fmt(ratio(r.sd.record?.e2eTps, r.ar.record?.e2eTps)))
-            r.lossless?.let { l ->
-                Text(
-                    if (l.identical) "Lossless\n${l.compared} tokens identical" else "Differs from\nreference at token ${l.firstDiff}",
-                    color = if (l.identical) Palette.ok else Palette.bad, fontSize = 12.sp,
-                )
+fun RaceScreen(r: RaceState, chart: Boolean, stats: Boolean, vm: DemoViewModel) {
+    val sc = vm.scenario(r.scenarioId)
+    val models = sc?.let { vm.modelsPath(it) }
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize().padding(horizontal = 8.dp, vertical = 6.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            BoxWithConstraints(Modifier.fillMaxWidth().weight(1f)) {
+                val gap = 8.dp
+                val k = ((maxWidth - gap) / 2 - 20.dp) / FULL_WIDTH   // the full-screen view is laid out for 367 dp of content
+                Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(gap)) {
+                    for (p in listOf(r.ar, r.sd)) {
+                        Surface(Modifier.weight(1f).fillMaxHeight().clickable { vm.go(Screen.Focus(p.role)) }, color = Palette.bg,
+                            shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp, Palette.line)) {
+                            RunView(p, r, sc, models, k, chart, stats, Modifier.padding(10.dp))
+                        }
+                    }
+                }
+            }
+            r.note?.let { note ->
+                var open by remember(note) { mutableStateOf(false) }
+                Text(note, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = if (open) Int.MAX_VALUE else 1,
+                    overflow = TextOverflow.Ellipsis, modifier = Modifier.clickable { open = !open })
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                if (r.running) {
+                    if (r.ar.phase == Phase.COOLING || r.sd.phase == Phase.COOLING) OutlinedButton(onClick = vm::skipCooldown) { Text("Start now") }
+                    Button(onClick = vm::cancel) { Text("Stop") }
+                } else {
+                    Button(onClick = vm::replayRace, enabled = r.ar.record != null && r.sd.record != null) { Text("Replay") }
+                }
+                OutlinedButton(onClick = { vm.go(Screen.Focus(null)) }) { Text("Full screen") }
+                Spacer(Modifier.weight(1f))
+                r.sd.record?.let { rec -> TextButton(onClick = { vm.go(Screen.Log(rec)) }) { Text("SD log", fontSize = 12.sp) } }
+                r.ar.record?.let { rec -> TextButton(onClick = { vm.go(Screen.Log(rec)) }) { Text("AR log", fontSize = 12.sp) } }
             }
         }
-        r.note?.let { note ->
-            var open by remember(note) { mutableStateOf(false) }
-            Text(note, fontSize = 10.sp, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = if (open) Int.MAX_VALUE else 2,
-                overflow = TextOverflow.Ellipsis, modifier = Modifier.clickable { open = !open })
-        }
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (r.running) {
-                if (r.ar.phase == Phase.COOLING || r.sd.phase == Phase.COOLING) OutlinedButton(onClick = vm::skipCooldown) { Text("Start now") }
-                Button(onClick = vm::cancel) { Text("Stop") }
-            } else {
-                Button(onClick = vm::replayRace, enabled = r.ar.record != null && r.sd.record != null) { Text("Replay race") }
-            }
-            r.sd.record?.let { rec -> OutlinedButton(onClick = { vm.go(Screen.Log(rec)) }) { Text("SD log") } }
-            r.ar.record?.let { rec -> OutlinedButton(onClick = { vm.go(Screen.Log(rec)) }) { Text("AR log") } }
-        }
+        Countdown(r.countdown, Palette.sd)
     }
 }
+
+private val FULL_WIDTH = 367.dp
 
 @Composable
 fun BoardScreen(b: BoardState, ui: UiState, vm: DemoViewModel) {
@@ -331,25 +368,34 @@ fun BoardScreen(b: BoardState, ui: UiState, vm: DemoViewModel) {
                 Triple(r.method.title, r.pane.record!!.headlineTps(b.headline) ?: 0.0, if (r.method.role == Role.SD) Palette.sd else Palette.ar)
             }, "tok/s", Modifier.fillMaxWidth())
         }
-        HorizontalDivider()
-        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        LazyColumn(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(b.rows, key = { it.method.id }) { row ->
                 val rec = row.pane.record
-                Card(Modifier.fillMaxWidth().clickable(enabled = rec != null) { rec?.let { vm.go(Screen.Log(it)) } }) {
-                    Column(Modifier.padding(10.dp)) {
+                val p = row.pane
+                val accent = Palette.accent(row.method.role)
+                Surface(Modifier.fillMaxWidth().clickable(enabled = rec != null) { rec?.let { vm.go(Screen.Log(it)) } }, color = Palette.bg,
+                    shape = RoundedCornerShape(12.dp), border = BorderStroke(1.dp, Palette.line)) {
+                    Column(Modifier.padding(12.dp)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(row.method.title, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                            PhaseChip(row.pane.phase, false)
+                            MethodBadge(row.method.title, row.method.role)
+                            Spacer(Modifier.width(8.dp))
+                            PhaseChip(p.phase, false)
+                            Spacer(Modifier.weight(1f))
+                            Text(fmt(rec?.headlineTps(b.headline) ?: p.shownTps, 1), color = accent, fontWeight = FontWeight.Bold, fontSize = 30.sp, style = Numbers)
+                            Text(" tok/s", color = Palette.muted, fontSize = 12.sp)
                         }
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Stat("tok/s", fmt(rec?.headlineTps(b.headline) ?: row.pane.shownTps, 1))
-                            Stat("AL", fmt(rec?.al ?: row.pane.liveAl))
-                            Stat("x AR", fmt(ratio(rec?.headlineTps(b.headline), arTps)))
-                            Stat("TTFT ms", fmt(rec?.ttftMs, 0))
-                            Stat("ref x", fmt(row.method.reference?.xar))
+                        Spacer(Modifier.height(6.dp))
+                        Row(Modifier.fillMaxWidth()) {
+                            Metric("X AR", fmt(ratio(rec?.headlineTps(b.headline), arTps)), "", 0.6f, Modifier.weight(1f))
+                            Metric("TOKENS / CALL", fmt(rec?.al ?: p.liveAl), "", 0.6f, Modifier.weight(1f))
+                            Metric("TTFT", fmt(rec?.ttftMs, 0), "ms", 0.6f, Modifier.weight(1f))
                         }
-                        row.pane.message?.let { Text(it, fontSize = 11.sp, color = if (row.pane.phase == Phase.FAILED) Palette.bad else Palette.warn) }
-                        if (row.pane.phase == Phase.DECODING) TokenText(row.pane.steps, row.pane.speculative, Modifier.fillMaxWidth().heightIn(max = 120.dp))
+                        if (p.steps.isNotEmpty()) {
+                            Spacer(Modifier.height(6.dp))
+                            StepStrip(p.steps, p.speculative, sc?.stepCap ?: 8, accent, Modifier.fillMaxWidth().height(28.dp), bar = 4.dp, gap = 2.dp)
+                        }
+                        p.message?.let { Text(it, fontSize = 11.sp, color = if (p.phase == Phase.FAILED) Palette.bad else Palette.warn) }
+                        if (p.phase == Phase.DECODING) TokenText(p.steps, p.speculative, Modifier.fillMaxWidth().heightIn(max = 120.dp))
                     }
                 }
             }

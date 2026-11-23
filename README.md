@@ -16,6 +16,8 @@ MobiSpec.cpp의 온디바이스 추측 디코딩(SD)을 Galaxy S26에서 보여 
 
 Galaxy S26에서 찍었다. 첫 줄의 레이스는 GPU 시나리오(Vicuna-7B, AR vs MAST, Spec-Bench coding 질문)이다.
 
+2026-10-23과 10-26에 찍은 화면이고, 그 뒤 실행 화면이 바뀌었다. 지금은 AR과 SD 실행이 같은 레이아웃(tok/s, x AR, 텍스트)을 쓰고 강조색만 다르다. 호출당 토큰 차트는 설정에서 끌 수 있고(기본은 켬), 토큰 수·시간·진행 막대 줄은 기본으로 꺼져 있다(`--ez stats true`로 켠다).
+
 | 레이스 진행 중 | 레이스 종료 | 홈 | VLM 프리셋 |
 |---|---|---|---|
 | <img src="docs/images/race-live.png" width="200"> | <img src="docs/images/race-final.png" width="200"> | <img src="docs/images/home.png" width="200"> | <img src="docs/images/vlm-preset.png" width="200"> |
@@ -28,7 +30,7 @@ Galaxy S26에서 찍었다. 첫 줄의 레이스는 GPU 시나리오(Vicuna-7B, 
 
 ## 구성
 
-경로는 MobiSpec.cpp 체크아웃과 같다. MobiSpec.cpp 트리 위에 그대로 덮어 쓰고 패치를 적용해서 쓴다.
+경로는 MobiSpec.cpp 체크아웃과 같다. SKKU-ESLAB/MobiSpec.cpp main의 `89552f274`(#48) 이후에는 앱과 드라이버 훅이 이미 들어 있으므로 이 저장소가 필요 없다. 그 이전 트리에서는 이 저장소의 파일을 덮어 쓰고 패치를 적용한다.
 
 | 경로 | 내용 |
 |---|---|
@@ -39,17 +41,20 @@ Galaxy S26에서 찍었다. 첫 줄의 레이스는 GPU 시나리오(Vicuna-7B, 
 
 ## 패치의 기준
 
-`patches/driver-demo-hooks.patch`는 SKKU-ESLAB/MobiSpec.cpp `34cb2d8ba`에, 2026-10-23 시점의 연구용 미커밋 변경을 더한 트리를 기준으로 한다.
+`patches/driver-demo-hooks.patch`는 SKKU-ESLAB/MobiSpec.cpp `49b475817`(#47의 merge 커밋, 2026-11-23)을 기준으로 한다.
+#48의 드라이버 쪽 변경과 같다(`git diff 49b475817 89552f274`에서 앱과 `common/` 헤더 두 개를 뺀 것). 바꾸는 파일은 7개다.
 
-| 파일 | 기준 blob | HEAD `34cb2d8ba`와 |
-|---|---|---|
-| `examples/simple-qnn/simple-qnn.cpp` | `9acb0366b26d` | 같다 |
-| `examples/speculative-eagle-2/speculative-eagle-2.cpp` | `1f57d86d2d8d` | 같다 |
-| `examples/speculative-eagle-mast/speculative-eagle-mast.cpp` | `ef2931bdf772` | 같다 |
-| `examples/speculative-dflash-qnn-npu/speculative-dflash-qnn-npu.cpp` | `393d286a6fb4` | 연구 변경 포함 |
-| `examples/speculative-dflash-qnn/vlm-run.cpp` | `bd794bf94633` | 연구 변경 포함 |
-| `examples/speculative-dflash-qnn/vlm-prompt.cpp` | `acea2d13529b` | 연구 변경 포함 |
-| `src/QNN/llm_decode_runner.h` | `cd931c0dbe33` | 연구 변경 포함 |
+| 파일 | 내용 |
+|---|---|
+| `examples/simple-qnn/simple-qnn.cpp` | 이벤트 훅 |
+| `examples/speculative-eagle-2/speculative-eagle-2.cpp` | 이벤트 훅 |
+| `examples/speculative-eagle-mast/speculative-eagle-mast.cpp` | 이벤트 훅, 검증한 트리와 수락 경로(`MOBISPEC_EVENTS_TREE=1`) |
+| `examples/speculative-dflash-qnn-npu/speculative-dflash-qnn-npu.cpp` | 이벤트 훅, 상주 모드(기본 DDTree만) |
+| `examples/speculative-dflash-qnn/vlm-run.cpp` | 이벤트 훅, 상주 모드 |
+| `examples/speculative-dflash-qnn/vlm-prompt.cpp` | 상주 중 임베딩 테이블과 비전 인코더 재사용 |
+| `src/QNN/llm_decode_runner.h` | `vlm_configured()` |
+
+`49b475817`보다 오래된 트리에는 그대로 적용되지 않는다.
 
 ```sh
 cd MobiSpec.cpp
